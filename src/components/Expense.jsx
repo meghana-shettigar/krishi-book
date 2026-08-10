@@ -16,19 +16,15 @@ const categories = {
     'Fencing',
     'Road maintenance',
     'Boundary repair',
-    'Cleaning',
     'Drainage',
     'Other',
   ],
 
   Water: [
     'Borewell',
-    'Pump installation',
-    'Pump repair',
+    'Pump',
     'Pipe',
-    'Drip irrigation',
     'Sprinkler',
-    'Electricity',
     'Water tank',
     'Other',
   ],
@@ -36,10 +32,9 @@ const categories = {
   Crop: [
     'Fertilizer',
     'Pesticide',
-    'Fungicide',
-    'Herbicide',
-    'Saplings',
-    'Seeds',
+    'Chunna',
+    'New Plant',
+    'New Seeds',
     'Compost',
     'Other',
   ],
@@ -66,36 +61,73 @@ const categories = {
   ],
 }
 
-function Expense({ onBack, existingTransaction }) {    
-const [category, setCategory] = useState(
-  existingTransaction?.category || ''
-)
-const [expenseType, setExpenseType] = useState(
-  existingTransaction?.expenseType || ''
-)
-const [amount, setAmount] = useState(
-  existingTransaction?.amount || ''
-)
-const [numberOfPeople, setNumberOfPeople] = useState(
-  existingTransaction?.numberOfPeople || ''
-)
+function Expense({ onBack, existingTransaction }) {
+  const [category, setCategory] = useState(
+    existingTransaction?.category || ''
+  )
 
-const [dailyCharge, setDailyCharge] = useState(
-  existingTransaction?.dailyCharge || ''
-)
-const [date, setDate] = useState(
-  existingTransaction?.date ||
-    new Date().toISOString().split('T')[0]
-)
+  const [expenseType, setExpenseType] = useState(
+    existingTransaction?.expenseType || ''
+  )
 
-const [notes, setNotes] = useState(
-  existingTransaction?.notes || ''
-)
+  const [amount, setAmount] = useState(
+    existingTransaction?.amount || ''
+  )
+
+  /*
+   * Manual labour
+   *
+   * The fallback values below allow older labour
+   * transactions to continue being edited.
+   *
+   * Older transactions used:
+   * numberOfPeople + dailyCharge
+   *
+   * New transactions use:
+   * menCount + menDailyCharge
+   * womenCount + womenDailyCharge
+   */
+  const [menCount, setMenCount] = useState(
+    existingTransaction?.menCount ??
+      existingTransaction?.numberOfPeople ??
+      ''
+  )
+
+  const [menDailyCharge, setMenDailyCharge] = useState(
+    existingTransaction?.menDailyCharge ??
+      existingTransaction?.dailyCharge ??
+      ''
+  )
+
+  const [womenCount, setWomenCount] = useState(
+    existingTransaction?.womenCount ?? ''
+  )
+
+  const [womenDailyCharge, setWomenDailyCharge] = useState(
+    existingTransaction?.womenDailyCharge ?? ''
+  )
+
+  const [date, setDate] = useState(
+    existingTransaction?.date ||
+      new Date().toISOString().split('T')[0]
+  )
+
+  const [notes, setNotes] = useState(
+    existingTransaction?.notes || ''
+  )
 
   const isLabour = category === 'Manual Labour'
 
+  const menTotal =
+    Number(menCount || 0) *
+    Number(menDailyCharge || 0)
+
+  const womenTotal =
+    Number(womenCount || 0) *
+    Number(womenDailyCharge || 0)
+
   const labourTotal =
-    Number(dailyCharge || 0) * Number(numberOfPeople || 0)
+    menTotal + womenTotal
 
   const finalAmount = isLabour
     ? labourTotal
@@ -125,19 +157,39 @@ const [notes, setNotes] = useState(
       amount: finalAmount,
       date,
       notes,
+
+      /*
+       * Save the new labour details.
+       *
+       * For non-labour expenses these are stored as 0,
+       * so the existing expense structure remains simple.
+       */
+      menCount: isLabour
+        ? Number(menCount || 0)
+        : 0,
+
+      menDailyCharge: isLabour
+        ? Number(menDailyCharge || 0)
+        : 0,
+
+      womenCount: isLabour
+        ? Number(womenCount || 0)
+        : 0,
+
+      womenDailyCharge: isLabour
+        ? Number(womenDailyCharge || 0)
+        : 0,
     }
 
-
-
     if (existingTransaction) {
-  updateTransaction(expense)
+      updateTransaction(expense)
 
-  alert('Expense updated successfully!')
-} else {
-  saveTransaction(expense)
+      alert('Expense updated successfully!')
+    } else {
+      saveTransaction(expense)
 
-  alert('Expense saved successfully!')
-}
+      alert('Expense saved successfully!')
+    }
 
     onBack()
   }
@@ -185,7 +237,9 @@ const [notes, setNotes] = useState(
               }}
               className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-4 pr-10 text-base font-medium text-gray-900 outline-none"
             >
-              <option value="">Choose category</option>
+              <option value="">
+                Choose category
+              </option>
 
               {Object.keys(categories).map((item) => (
                 <option key={item} value={item}>
@@ -220,7 +274,9 @@ const [notes, setNotes] = useState(
                 }
                 className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-4 pr-10 text-base font-medium text-gray-900 outline-none"
               >
-                <option value="">Choose expense</option>
+                <option value="">
+                  Choose expense
+                </option>
 
                 {categories[category].map((item) => (
                   <option key={item} value={item}>
@@ -245,55 +301,147 @@ const [notes, setNotes] = useState(
               Labour details
             </p>
 
-            <div className="mb-4">
-              <label
-                htmlFor="dailyCharge"
-                className="mb-2 block text-sm font-medium text-gray-600"
-              >
-                Daily charge per person
-              </label>
+            {/* Men */}
+            <div className="mb-5 rounded-xl bg-[#F7F5EF] p-4">
+              <p className="mb-3 text-sm font-semibold text-gray-900">
+                Men
+              </p>
 
-              <div className="flex items-center rounded-xl border border-gray-200 bg-white">
-                <span className="pl-4 text-gray-500">
-                  ₹
-                </span>
+              <div className="grid grid-cols-2 gap-3">
 
-                <input
-                  id="dailyCharge"
-                  type="number"
-                  inputMode="decimal"
-                  value={dailyCharge}
-                  onChange={(event) =>
-                    setDailyCharge(event.target.value)
-                  }
-                  placeholder="900"
-                  className="w-full rounded-xl px-3 py-4 text-base outline-none"
-                />
+                <div>
+                  <label
+                    htmlFor="menCount"
+                    className="mb-2 block text-sm font-medium text-gray-600"
+                  >
+                    Number of men
+                  </label>
+
+                  <input
+                    id="menCount"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    value={menCount}
+                    onChange={(event) =>
+                      setMenCount(event.target.value)
+                    }
+                    placeholder="2"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="menDailyCharge"
+                    className="mb-2 block text-sm font-medium text-gray-600"
+                  >
+                    Daily rate
+                  </label>
+
+                  <div className="flex items-center rounded-xl border border-gray-200 bg-white">
+                    <span className="pl-3 text-gray-500">
+                      ₹
+                    </span>
+
+                    <input
+                      id="menDailyCharge"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      value={menDailyCharge}
+                      onChange={(event) =>
+                        setMenDailyCharge(
+                          event.target.value
+                        )
+                      }
+                      placeholder="700"
+                      className="w-full rounded-xl px-3 py-4 text-base outline-none"
+                    />
+                  </div>
+                </div>
+
               </div>
+
+              {menTotal > 0 && (
+                <p className="mt-3 text-sm text-gray-500">
+                  Men: ₹
+                  {menTotal.toLocaleString('en-IN')}
+                </p>
+              )}
             </div>
 
-            <div>
-              <label
-                htmlFor="numberOfPeople"
-                className="mb-2 block text-sm font-medium text-gray-600"
-              >
-                Number of people
-              </label>
+            {/* Women */}
+            <div className="rounded-xl bg-[#F7F5EF] p-4">
+              <p className="mb-3 text-sm font-semibold text-gray-900">
+                Women
+              </p>
 
-              <input
-                id="numberOfPeople"
-                type="number"
-                inputMode="numeric"
-                min="1"
-                value={numberOfPeople}
-                onChange={(event) =>
-                  setNumberOfPeople(event.target.value)
-                }
-                placeholder="5"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
-              />
+              <div className="grid grid-cols-2 gap-3">
+
+                <div>
+                  <label
+                    htmlFor="womenCount"
+                    className="mb-2 block text-sm font-medium text-gray-600"
+                  >
+                    Number of women
+                  </label>
+
+                  <input
+                    id="womenCount"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    value={womenCount}
+                    onChange={(event) =>
+                      setWomenCount(event.target.value)
+                    }
+                    placeholder="3"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="womenDailyCharge"
+                    className="mb-2 block text-sm font-medium text-gray-600"
+                  >
+                    Daily rate
+                  </label>
+
+                  <div className="flex items-center rounded-xl border border-gray-200 bg-white">
+                    <span className="pl-3 text-gray-500">
+                      ₹
+                    </span>
+
+                    <input
+                      id="womenDailyCharge"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      value={womenDailyCharge}
+                      onChange={(event) =>
+                        setWomenDailyCharge(
+                          event.target.value
+                        )
+                      }
+                      placeholder="500"
+                      className="w-full rounded-xl px-3 py-4 text-base outline-none"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+              {womenTotal > 0 && (
+                <p className="mt-3 text-sm text-gray-500">
+                  Women: ₹
+                  {womenTotal.toLocaleString('en-IN')}
+                </p>
+              )}
             </div>
 
+            {/* Total labour cost */}
             {labourTotal > 0 && (
               <div className="mt-5 rounded-xl bg-[#E4F1E7] p-4">
                 <p className="text-sm text-gray-600">
@@ -388,10 +536,10 @@ const [notes, setNotes] = useState(
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white shadow-sm transition active:scale-[0.98]"
             >
               <Save size={20} />
-            {existingTransaction
-             ? 'Update Expense'
-             : 'Save Expense'
-            }
+
+              {existingTransaction
+                ? 'Update Expense'
+                : 'Save Expense'}
             </button>
           </>
         )}

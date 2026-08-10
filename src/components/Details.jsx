@@ -194,6 +194,20 @@ const transactions = getTransactions()
     </p>
 
   </div>
+                   {/* Notes */}
+                    {transaction.notes?.trim() && (
+                      <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
+                        <p className="mb-1 text-xs font-medium text-gray-500">
+                          Note
+                        </p>
+
+                        <p className="text-sm leading-5 text-gray-700">
+                          {transaction.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Actions */}
 
   <div className="mt-4 flex justify-end gap-2 border-t border-gray-100 pt-3">
 

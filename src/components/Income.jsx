@@ -13,6 +13,8 @@ const incomeTypes = {
   Sold: [
     'Coconut',
     'Supari',
+    'Pepper',
+    'Vegetable',
     'Other',
   ],
   'Agricultural benefit': [
@@ -24,31 +26,34 @@ const incomeTypes = {
 }
 
 function Income({ onBack, existingTransaction }) {
-const [incomeType, setIncomeType] = useState(
-  existingTransaction?.incomeType || ''
-)
-const [crop, setCrop] = useState(
-  existingTransaction?.crop || ''
-)  
-const [quantity, setQuantity] = useState(
-  existingTransaction?.quantity || ''
-)
+  const [incomeType, setIncomeType] = useState(
+    existingTransaction?.incomeType || ''
+  )
 
-const [rate, setRate] = useState(
-  existingTransaction?.rate || ''
-)
-const [amount, setAmount] = useState(
-  existingTransaction?.amount || ''
-)
+  const [crop, setCrop] = useState(
+    existingTransaction?.crop || ''
+  )
 
-const [date, setDate] = useState(
-  existingTransaction?.date ||
-    new Date().toISOString().split('T')[0]
-)
+  const [quantity, setQuantity] = useState(
+    existingTransaction?.quantity || ''
+  )
 
-const [notes, setNotes] = useState(
-  existingTransaction?.notes || ''
-)
+  const [rate, setRate] = useState(
+    existingTransaction?.rate || ''
+  )
+
+  const [amount, setAmount] = useState(
+    existingTransaction?.amount || ''
+  )
+
+  const [date, setDate] = useState(
+    existingTransaction?.date ||
+      new Date().toISOString().split('T')[0]
+  )
+
+  const [notes, setNotes] = useState(
+    existingTransaction?.notes || ''
+  )
 
   const isSold = incomeType === 'Sold'
 
@@ -91,16 +96,16 @@ const [notes, setNotes] = useState(
       notes,
     }
 
-  
     if (existingTransaction) {
-  updateTransaction(income)
+      updateTransaction(income)
 
-  alert('Income updated successfully!')
-} else {
-  saveTransaction(income)
+      alert('Income updated successfully!')
+    } else {
+      saveTransaction(income)
 
-  alert('Income saved successfully!')
-}
+      alert('Income saved successfully!')
+    }
+
     onBack()
   }
 
@@ -224,7 +229,9 @@ const [notes, setNotes] = useState(
                 htmlFor="quantity"
                 className="mb-2 block text-sm font-medium text-gray-600"
               >
-                Quantity (kg)
+                {crop === 'Coconut'
+                  ? 'Number of coconuts'
+                  : 'Quantity (kg)'}
               </label>
 
               <div className="flex items-center rounded-xl border border-gray-200 bg-white">
@@ -237,12 +244,18 @@ const [notes, setNotes] = useState(
                   onChange={(event) =>
                     setQuantity(event.target.value)
                   }
-                  placeholder="500"
+                  placeholder={
+                    crop === 'Coconut'
+                      ? '500'
+                      : '500'
+                  }
                   className="w-full rounded-xl px-4 py-4 text-base outline-none"
                 />
 
                 <span className="pr-4 text-sm text-gray-500">
-                  kg
+                  {crop === 'Coconut'
+                    ? 'coconuts'
+                    : 'kg'}
                 </span>
               </div>
             </div>
@@ -253,7 +266,9 @@ const [notes, setNotes] = useState(
                 htmlFor="rate"
                 className="mb-2 block text-sm font-medium text-gray-600"
               >
-                Rate per kg
+                {crop === 'Coconut'
+                  ? 'Rate per coconut'
+                  : 'Rate per kg'}
               </label>
 
               <div className="flex items-center rounded-xl border border-gray-200 bg-white">
@@ -270,7 +285,11 @@ const [notes, setNotes] = useState(
                   onChange={(event) =>
                     setRate(event.target.value)
                   }
-                  placeholder="42"
+                  placeholder={
+                    crop === 'Coconut'
+                      ? '25'
+                      : '42'
+                  }
                   className="w-full rounded-xl px-3 py-4 text-base outline-none"
                 />
               </div>
@@ -370,9 +389,10 @@ const [notes, setNotes] = useState(
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white shadow-sm transition active:scale-[0.98]"
             >
               <Save size={20} />
-{existingTransaction
-  ? 'Update Income'
-  : 'Save Income'}
+
+              {existingTransaction
+                ? 'Update Income'
+                : 'Save Income'}
             </button>
           </>
         )}
