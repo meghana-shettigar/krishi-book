@@ -1,5 +1,16 @@
-import { ArrowLeft, TrendingDown, TrendingUp, Pencil, Trash2 } from 'lucide-react'
-import { getTransactions, deleteTransaction } from '../utils/storage'
+import {
+  ArrowLeft,
+  TrendingDown,
+  TrendingUp,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
+
+import {
+  getTransactions,
+  deleteTransaction,
+} from '../utils/storage'
+
 import {
   filterTransactions,
   calculateTotals,
@@ -11,36 +22,41 @@ function Details({
   onBack,
   onEdit,
 }) {
-const transactions = getTransactions()
+  const transactions = getTransactions()
 
   const filteredTransactions = filterTransactions(
     transactions,
     period
   )
 
-  const totals = calculateTotals(filteredTransactions)
+  const totals = calculateTotals(
+    filteredTransactions
+  )
 
   const periodLabels = {
     day: 'Today',
     month: 'This Month',
     year: 'This Year',
   }
-  const handleDelete = (transactionId) => {
-  const confirmed = window.confirm(
-    'Are you sure you want to delete this transaction?'
-  )
 
-  if (!confirmed) {
-    return
+  const handleDelete = (transactionId) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this transaction?'
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    deleteTransaction(transactionId)
+
+    window.location.reload()
   }
 
-  deleteTransaction(transactionId)
-
-  window.location.reload()
-}
-
   const formatDate = (date) => {
-    return new Date(`${date}T00:00:00`).toLocaleDateString(
+    return new Date(
+      `${date}T00:00:00`
+    ).toLocaleDateString(
       'en-IN',
       {
         day: 'numeric',
@@ -110,7 +126,9 @@ const transactions = getTransactions()
                     : 'text-gray-900'
                 }`}
               >
-                {formatCurrency(totals.profitLoss)}
+                {formatCurrency(
+                  totals.profitLoss
+                )}
               </span>
             </div>
           </div>
@@ -137,102 +155,230 @@ const transactions = getTransactions()
             </div>
           ) : (
             <div className="space-y-3">
+
               {[...filteredTransactions]
                 .sort(
                   (a, b) =>
                     new Date(b.date) -
                     new Date(a.date)
                 )
-                .map((transaction) => (
-                  <div
-  key={transaction.id}
-  className="rounded-2xl bg-white p-4 shadow-sm"
->
-  <div className="flex items-center gap-4">
+                .map((transaction) => {
 
-    <div
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-        transaction.type === 'income'
-          ? 'bg-[#E4F1E7]'
-          : 'bg-[#FCE8E4]'
-      }`}
-    >
-      {transaction.type === 'income' ? (
-        <TrendingUp size={21} />
-      ) : (
-        <TrendingDown size={21} />
-      )}
-    </div>
+                  const isIncome =
+                    transaction.type === 'income'
 
-    <div className="min-w-0 flex-1">
-      <p className="truncate font-medium text-gray-900">
-        {transaction.type === 'income'
-          ? transaction.crop
-          : transaction.expenseType}
-      </p>
+                  const isLabour =
+                    !isIncome &&
+                    transaction.category === 'Manual Labour'
 
-      <p className="mt-1 text-xs text-gray-500">
-        {transaction.type === 'income'
-          ? transaction.incomeType
-          : transaction.category}
-        {' · '}
-        {formatDate(transaction.date)}
-      </p>
-    </div>
+                  const hasSaleDetails =
+                    isIncome &&
+                    transaction.quantity != null &&
+                    transaction.rate != null
 
-    <p
-      className={`font-semibold ${
-        transaction.type === 'income'
-          ? 'text-gray-900'
-          : 'text-gray-700'
-      }`}
-    >
-      {transaction.type === 'income'
-        ? '+'
-        : '-'}
-      {formatCurrency(transaction.amount)}
-    </p>
+                  const menTotal =
+                    Number(
+                      transaction.menCount || 0
+                    ) *
+                    Number(
+                      transaction.menDailyCharge || 0
+                    )
 
-  </div>
-                   {/* Notes */}
-                    {transaction.notes?.trim() && (
-                      <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
-                        <p className="mb-1 text-xs font-medium text-gray-500">
-                          Note
+                  const womenTotal =
+                    Number(
+                      transaction.womenCount || 0
+                    ) *
+                    Number(
+                      transaction.womenDailyCharge || 0
+                    )
+
+                  const hasMen =
+                    Number(
+                      transaction.menCount || 0
+                    ) > 0
+
+                  const hasWomen =
+                    Number(
+                      transaction.womenCount || 0
+                    ) > 0
+
+                  return (
+                    <div
+                      key={transaction.id}
+                      className="rounded-2xl bg-white p-4 shadow-sm"
+                    >
+
+                      {/* Transaction summary */}
+                      <div className="flex items-start gap-3">
+
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                            isIncome
+                              ? 'bg-[#E4F1E7]'
+                              : 'bg-[#FCE8E4]'
+                          }`}
+                        >
+                          {isIncome ? (
+                            <TrendingUp size={21} />
+                          ) : (
+                            <TrendingDown size={21} />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-gray-900">
+                            {isIncome
+                              ? transaction.crop
+                              : transaction.expenseType}
+                          </p>
+
+                          <p className="mt-1 text-xs text-gray-500">
+                            {isIncome
+                              ? transaction.incomeType
+                              : transaction.category}
+                            {' · '}
+                            {formatDate(
+                              transaction.date
+                            )}
+                          </p>
+                        </div>
+
+                        <p
+                          className={`shrink-0 font-semibold ${
+                            isIncome
+                              ? 'text-gray-900'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          {isIncome ? '+' : '-'}
+                          {formatCurrency(
+                            transaction.amount
+                          )}
                         </p>
 
-                        <p className="text-sm leading-5 text-gray-700">
-                          {transaction.notes}
-                        </p>
                       </div>
-                    )}
 
-                    {/* Actions */}
+                      {/* Sale details */}
+                      {hasSaleDetails && (
+                        <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
-  <div className="mt-4 flex justify-end gap-2 border-t border-gray-100 pt-3">
+                          <p className="text-sm font-medium text-gray-700">
+                            {Number(
+                              transaction.quantity
+                            ).toLocaleString('en-IN')}{' '}
+                            {transaction.crop === 'Coconut'
+                              ? 'coconuts'
+                              : 'kg'}
+                            {' × '}
+                            {formatCurrency(
+                              transaction.rate
+                            )}
+                            {transaction.crop === 'Coconut'
+                              ? ' / coconut'
+                              : ' / kg'}
+                          </p>
 
-    <button
-      className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
-  onClick={() => onEdit(transaction)}
+                        </div>
+                      )}
 
-    >
-      <Pencil size={16} />
-      Edit
-    </button>
+                      {/* Manual labour details */}
+                      {isLabour && (
+                        <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
-    <button
-      className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-      onClick={() =>
-        handleDelete(transaction.id)
-      }
-    >
-      <Trash2 size={16} />
-      Delete
-    </button>
+                          <p className="mb-2 text-xs font-medium text-gray-500">
+                            Labour details
+                          </p>
 
-  </div>
-</div>
-                ))}
+                          {/* Men */}
+                          {hasMen && (
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <span className="text-sm text-gray-700">
+                                Men
+                              </span>
+
+                              <span className="text-sm font-medium text-gray-900">
+                                {transaction.menCount}{' '}
+                                ×{' '}
+                                {formatCurrency(
+                                  transaction.menDailyCharge
+                                )}{' '}
+                                ={' '}
+                                {formatCurrency(
+                                  menTotal
+                                )}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Women */}
+                          {hasWomen && (
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-sm text-gray-700">
+                                Women
+                              </span>
+
+                              <span className="text-sm font-medium text-gray-900">
+                                {transaction.womenCount}{' '}
+                                ×{' '}
+                                {formatCurrency(
+                                  transaction.womenDailyCharge
+                                )}{' '}
+                                ={' '}
+                                {formatCurrency(
+                                  womenTotal
+                                )}
+                              </span>
+                            </div>
+                          )}
+
+                        </div>
+                      )}
+
+                      {/* Notes */}
+                      {transaction.notes?.trim() && (
+                        <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
+
+                          <p className="mb-1 text-xs font-medium text-gray-500">
+                            Note
+                          </p>
+
+                          <p className="text-sm leading-5 text-gray-700">
+                            {transaction.notes}
+                          </p>
+
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="mt-4 flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
+
+                        <button
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                          onClick={() =>
+                            onEdit(transaction)
+                          }
+                        >
+                          <Pencil size={16} />
+                          Edit
+                        </button>
+
+                        <button
+                          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                          onClick={() =>
+                            handleDelete(
+                              transaction.id
+                            )
+                          }
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+
+                      </div>
+
+                    </div>
+                  )
+                })}
             </div>
           )}
         </section>
