@@ -44,6 +44,12 @@ function App() {
   const [period, setPeriod] =
     useState('year')
 
+  const [customFrom, setCustomFrom] =
+  useState('')
+
+  const [customTo, setCustomTo] =
+  useState('')
+
   const [screen, setScreen] =
     useState('home')
 
@@ -214,22 +220,47 @@ function App() {
   const transactions =
     getTransactions()
 
-  const filteredTransactions =
-    filterTransactions(
-      transactions,
-      period
-    )
+ const filteredTransactions =
+  period === 'custom'
+    ? transactions.filter(
+        (transaction) => {
+          if (!transaction.date) {
+            return false
+          }
+
+          if (
+            customFrom &&
+            transaction.date < customFrom
+          ) {
+            return false
+          }
+
+          if (
+            customTo &&
+            transaction.date > customTo
+          ) {
+            return false
+          }
+
+          return true
+        }
+      )
+    : filterTransactions(
+        transactions,
+        period
+      )
 
   const totals =
     calculateTotals(
       filteredTransactions
     )
 
-  const periodLabels = {
-    day: 'Today',
-    month: 'This Month',
-    year: 'This Year',
-  }
+const periodLabels = {
+  day: 'Today',
+  month: 'This Month',
+  year: 'This Year',
+  custom: 'Custom',
+}
 
   const handleComingSoon =
     (feature) => {
@@ -270,6 +301,8 @@ function App() {
     return (
       <Details
         period={period}
+        customFrom={customFrom}
+        customTo={customTo}
         onBack={() =>
           setScreen('home')
         }
@@ -406,6 +439,11 @@ function App() {
               <option value="year">
                 This Year
               </option>
+
+              <option value="custom">
+              Custom
+              </option>
+
             </select>
 
             <ChevronDown
@@ -416,7 +454,66 @@ function App() {
           </div>
 
         </section>
+{/* Custom Date Range */}
+{period === 'custom' && (
+  <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
 
+    <p className="mb-4 text-sm font-medium text-gray-600">
+      Select date range
+    </p>
+
+    <div className="space-y-4">
+
+      {/* From */}
+      <div>
+        <label
+          htmlFor="customFrom"
+          className="mb-2 block text-sm font-medium text-gray-600"
+        >
+          From
+        </label>
+
+        <input
+          id="customFrom"
+          type="date"
+          value={customFrom}
+          max={customTo || undefined}
+          onChange={(event) =>
+            setCustomFrom(
+              event.target.value
+            )
+          }
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
+        />
+      </div>
+
+      {/* To */}
+      <div>
+        <label
+          htmlFor="customTo"
+          className="mb-2 block text-sm font-medium text-gray-600"
+        >
+          To
+        </label>
+
+        <input
+          id="customTo"
+          type="date"
+          value={customTo}
+          min={customFrom || undefined}
+          onChange={(event) =>
+            setCustomTo(
+              event.target.value
+            )
+          }
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
+        />
+      </div>
+
+    </div>
+
+  </section>
+)}
         {/* Profit / Loss */}
         <section className="mb-3 rounded-2xl bg-white p-6 shadow-sm">
 

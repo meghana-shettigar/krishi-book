@@ -19,25 +19,52 @@ import {
 
 function Details({
   period,
+  customFrom,
+  customTo,
   onBack,
   onEdit,
 }) {
   const transactions = getTransactions()
 
-  const filteredTransactions = filterTransactions(
-    transactions,
-    period
-  )
+const filteredTransactions =
+  period === 'custom'
+    ? transactions.filter(
+        (transaction) => {
+          if (!transaction.date) {
+            return false
+          }
 
+          if (
+            customFrom &&
+            transaction.date < customFrom
+          ) {
+            return false
+          }
+
+          if (
+            customTo &&
+            transaction.date > customTo
+          ) {
+            return false
+          }
+
+          return true
+        }
+      )
+    : filterTransactions(
+        transactions,
+        period
+      )
   const totals = calculateTotals(
     filteredTransactions
   )
 
-  const periodLabels = {
-    day: 'Today',
-    month: 'This Month',
-    year: 'This Year',
-  }
+ const periodLabels = {
+  day: 'Today',
+  month: 'This Month',
+  year: 'This Year',
+  custom: 'Custom Range',
+}
 
   const handleDelete = (transactionId) => {
     const confirmed = window.confirm(
@@ -84,9 +111,13 @@ function Details({
               Details
             </h1>
 
-            <p className="text-sm text-gray-500">
-              {periodLabels[period]}
-            </p>
+<p className="text-sm text-gray-500">
+  {period === 'custom'
+    ? customFrom && customTo
+      ? `${formatDate(customFrom)} – ${formatDate(customTo)}`
+      : periodLabels[period]
+    : periodLabels[period]}
+</p>
           </div>
         </header>
 
