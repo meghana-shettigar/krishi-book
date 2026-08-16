@@ -45,10 +45,10 @@ function App() {
     useState('year')
 
   const [customFrom, setCustomFrom] =
-    useState('')
+  useState('')
 
   const [customTo, setCustomTo] =
-    useState('')
+  useState('')
 
   const [screen, setScreen] =
     useState('home')
@@ -80,7 +80,7 @@ function App() {
   ] = useState(false)
 
   /*
-   * Watch Firebase login state
+   * Watch Firebase login state.
    */
   useEffect(() => {
     const unsubscribe =
@@ -88,6 +88,7 @@ function App() {
         auth,
         (firebaseUser) => {
           setUser(firebaseUser)
+
           setAuthLoading(false)
         }
       )
@@ -96,7 +97,14 @@ function App() {
   }, [])
 
   /*
-   * Start cloud sync after login
+   * Once signed in:
+   *
+   * 1. Check whether old Local Storage
+   *    needs moving to Firebase.
+   *
+   * 2. Load cloud transactions.
+   *
+   * 3. Start realtime synchronization.
    */
   useEffect(() => {
     if (!user) {
@@ -151,10 +159,6 @@ function App() {
     }
   }, [user])
 
-  /*
-   * Move old Local Storage records
-   * to Firebase once
-   */
   const handleMigration =
     async () => {
       const confirmed =
@@ -207,100 +211,56 @@ function App() {
     }
 
   /*
-   * Custom date handlers
-   *
-   * Mobile browsers do not always
-   * respect min/max correctly, so
-   * we validate in React as well.
-   */
-  const handleCustomFromChange =
-    (value) => {
-      setCustomFrom(value)
-
-      if (
-        customTo &&
-        value &&
-        customTo < value
-      ) {
-        setCustomTo('')
-      }
-    }
-
-  const handleCustomToChange =
-    (value) => {
-      if (
-        customFrom &&
-        value &&
-        value < customFrom
-      ) {
-        alert(
-          'To date cannot be earlier than From date.'
-        )
-
-        return
-      }
-
-      setCustomTo(value)
-    }
-
-  const handleResetCustomDates =
-    () => {
-      setCustomFrom('')
-      setCustomTo('')
-    }
-
-  /*
-   * Force React refresh after
-   * realtime Firebase updates
+   * Reading this variable makes React
+   * re-render whenever dataVersion
+   * changes after a cloud update.
    */
   void dataVersion
 
   const transactions =
     getTransactions()
 
-  const filteredTransactions =
-    period === 'custom'
-      ? transactions.filter(
-          (transaction) => {
-            if (!transaction.date) {
-              return false
-            }
-
-            if (
-              customFrom &&
-              transaction.date <
-                customFrom
-            ) {
-              return false
-            }
-
-            if (
-              customTo &&
-              transaction.date >
-                customTo
-            ) {
-              return false
-            }
-
-            return true
+ const filteredTransactions =
+  period === 'custom'
+    ? transactions.filter(
+        (transaction) => {
+          if (!transaction.date) {
+            return false
           }
-        )
-      : filterTransactions(
-          transactions,
-          period
-        )
+
+          if (
+            customFrom &&
+            transaction.date < customFrom
+          ) {
+            return false
+          }
+
+          if (
+            customTo &&
+            transaction.date > customTo
+          ) {
+            return false
+          }
+
+          return true
+        }
+      )
+    : filterTransactions(
+        transactions,
+        period
+      )
 
   const totals =
     calculateTotals(
       filteredTransactions
     )
 
-  const periodLabels = {
-    day: 'Today',
-    month: 'This Month',
-    year: 'This Year',
-    custom: 'Custom',
-  }
+const periodLabels = {
+  day: 'Today',
+  month: 'This Month',
+  year: 'This Year',
+  custom: 'Custom',
+}
 
   const handleComingSoon =
     (feature) => {
@@ -309,9 +269,6 @@ function App() {
       )
     }
 
-  /*
-   * Loading screen
-   */
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F5EF]">
@@ -322,16 +279,10 @@ function App() {
     )
   }
 
-  /*
-   * Login
-   */
   if (!user) {
     return <Login />
   }
 
-  /*
-   * Expense screen
-   */
   if (screen === 'expense') {
     return (
       <Expense
@@ -346,9 +297,6 @@ function App() {
     )
   }
 
-  /*
-   * Details screen
-   */
   if (screen === 'details') {
     return (
       <Details
@@ -376,9 +324,6 @@ function App() {
     )
   }
 
-  /*
-   * Income screen
-   */
   if (screen === 'income') {
     return (
       <Income
@@ -437,13 +382,7 @@ function App() {
                 </p>
 
                 <p className="mt-1 text-sm leading-5 text-gray-600">
-                  Your existing farm
-                  records are still
-                  stored on this device.
-                  Move them to Krishi
-                  Book Cloud so they can
-                  appear on your other
-                  phones too.
+                  Your existing farm records are still stored on this device. Move them to Krishi Book Cloud so they can appear on your other phones too.
                 </p>
 
                 <button
@@ -502,8 +441,9 @@ function App() {
               </option>
 
               <option value="custom">
-                Custom
+              Custom
               </option>
+
             </select>
 
             <ChevronDown
@@ -514,92 +454,66 @@ function App() {
           </div>
 
         </section>
+{/* Custom Date Range */}
+{period === 'custom' && (
+  <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
 
-        {/* Custom Date Range */}
-        {period === 'custom' && (
-          <section className="mb-4 w-full min-w-0 overflow-hidden rounded-2xl bg-white p-5 shadow-sm">
+    <p className="mb-4 text-sm font-medium text-gray-600">
+      Select date range
+    </p>
 
-            <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="space-y-4">
 
-              <p className="text-sm font-medium text-gray-600">
-                Select date range
-              </p>
+      {/* From */}
+      <div>
+        <label
+          htmlFor="customFrom"
+          className="mb-2 block text-sm font-medium text-gray-600"
+        >
+          From
+        </label>
 
-              <button
-                type="button"
-                onClick={
-                  handleResetCustomDates
-                }
-                className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-gray-500"
-              >
-                Reset
-              </button>
+        <input
+          id="customFrom"
+          type="date"
+          value={customFrom}
+          max={customTo || undefined}
+          onChange={(event) =>
+            setCustomFrom(
+              event.target.value
+            )
+          }
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
+        />
+      </div>
 
-            </div>
+      {/* To */}
+      <div>
+        <label
+          htmlFor="customTo"
+          className="mb-2 block text-sm font-medium text-gray-600"
+        >
+          To
+        </label>
 
-            <div className="min-w-0 space-y-4">
+        <input
+          id="customTo"
+          type="date"
+          value={customTo}
+          min={customFrom || undefined}
+          onChange={(event) =>
+            setCustomTo(
+              event.target.value
+            )
+          }
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
+        />
+      </div>
 
-              {/* From */}
-              <div className="min-w-0">
+    </div>
 
-                <label
-                  htmlFor="customFrom"
-                  className="mb-2 block text-sm font-medium text-gray-600"
-                >
-                  From
-                </label>
-
-                <input
-                  id="customFrom"
-                  type="date"
-                  value={customFrom}
-                  max={
-                    customTo ||
-                    undefined
-                  }
-                  onChange={(event) =>
-                    handleCustomFromChange(
-                      event.target.value
-                    )
-                  }
-                  className="block w-full min-w-0 max-w-full rounded-xl border border-gray-200 bg-white px-3 py-4 text-base outline-none"
-                />
-
-              </div>
-
-              {/* To */}
-              <div className="min-w-0">
-
-                <label
-                  htmlFor="customTo"
-                  className="mb-2 block text-sm font-medium text-gray-600"
-                >
-                  To
-                </label>
-
-                <input
-                  id="customTo"
-                  type="date"
-                  value={customTo}
-                  min={
-                    customFrom ||
-                    undefined
-                  }
-                  onChange={(event) =>
-                    handleCustomToChange(
-                      event.target.value
-                    )
-                  }
-                  className="block w-full min-w-0 max-w-full rounded-xl border border-gray-200 bg-white px-3 py-4 text-base outline-none"
-                />
-
-              </div>
-
-            </div>
-
-          </section>
-        )}
-
+  </section>
+)}
         {/* Profit / Loss */}
         <section className="mb-3 rounded-2xl bg-white p-6 shadow-sm">
 
@@ -653,7 +567,6 @@ function App() {
         {/* Main Actions */}
         <div className="space-y-3">
 
-          {/* Expense */}
           <button
             onClick={() =>
               setScreen('expense')
@@ -671,14 +584,12 @@ function App() {
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                Add money spent on
-                the farm
+                Add money spent on the farm
               </p>
             </div>
 
           </button>
 
-          {/* Income */}
           <button
             onClick={() =>
               setScreen('income')
@@ -696,14 +607,12 @@ function App() {
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                Add money made from
-                the farm
+                Add money made from the farm
               </p>
             </div>
 
           </button>
 
-          {/* Trends */}
           <button
             onClick={() =>
               handleComingSoon(
@@ -723,8 +632,7 @@ function App() {
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                See how your farm is
-                doing
+                See how your farm is doing
               </p>
             </div>
 
