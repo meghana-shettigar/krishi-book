@@ -29,6 +29,7 @@ import {
   filterTransactions,
   calculateTotals,
   formatCurrency,
+  getPeriodDateLabel,
 } from './utils/calculations'
 
 import {
@@ -522,8 +523,15 @@ function App() {
             />
 
           </div>
+<p className="mt-2 px-1 text-sm text-gray-500">
+  {getPeriodDateLabel(
+    period,
+    customFrom,
+    customTo
+  )}
+</p>
 
-        </section>
+</section>
 
         {/* Custom Date Range */}
         {period === 'custom' && (

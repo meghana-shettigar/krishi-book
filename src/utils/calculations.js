@@ -82,3 +82,107 @@ export function calculateTotals(transactions) {
 export function formatCurrency(amount) {
   return `₹${Number(amount).toLocaleString('en-IN')}`
 }
+
+export function getPeriodDateLabel(
+  period,
+  customFrom = '',
+  customTo = ''
+) {
+  const today = new Date()
+
+  const formatDate = (date) =>
+    date.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+
+  const parseDate = (dateString) => {
+    if (!dateString) {
+      return null
+    }
+
+    const [year, month, day] =
+      dateString.split('-').map(Number)
+
+    return new Date(
+      year,
+      month - 1,
+      day
+    )
+  }
+
+  if (period === 'day') {
+    return formatDate(today)
+  }
+
+  if (period === 'month') {
+    const firstDay =
+      new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        1
+      )
+
+    const lastDay =
+      new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0
+      )
+
+    return `${formatDate(
+      firstDay
+    )} – ${formatDate(lastDay)}`
+  }
+
+  if (period === 'year') {
+    const firstDay =
+      new Date(
+        today.getFullYear(),
+        0,
+        1
+      )
+
+    const lastDay =
+      new Date(
+        today.getFullYear(),
+        11,
+        31
+      )
+
+    return `${formatDate(
+      firstDay
+    )} – ${formatDate(lastDay)}`
+  }
+
+  if (period === 'custom') {
+    const fromDate =
+      parseDate(customFrom)
+
+    const toDate =
+      parseDate(customTo)
+
+    if (fromDate && toDate) {
+      return `${formatDate(
+        fromDate
+      )} – ${formatDate(toDate)}`
+    }
+
+    if (fromDate) {
+      return `From ${formatDate(
+        fromDate
+      )}`
+    }
+
+    if (toDate) {
+      return `Up to ${formatDate(
+        toDate
+      )}`
+    }
+
+    return 'Select a date range'
+  }
+
+  return ''
+}

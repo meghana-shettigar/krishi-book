@@ -18,6 +18,7 @@ import {
 import {
   filterTransactions,
   formatCurrency,
+  getPeriodDateLabel,
 } from '../utils/calculations'
 
 function Trends({
@@ -318,6 +319,13 @@ function Trends({
 
           </div>
 
+  <p className="mt-2 px-1 text-sm text-gray-500">
+    {getPeriodDateLabel(
+      period,
+      customFrom,
+      customTo
+    )}
+  </p>
         </section>
 
         {/* Custom Date Range */}
