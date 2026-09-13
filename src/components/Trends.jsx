@@ -11,6 +11,8 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+import TransactionSearch from './TransactionSearch'
+
 import {
   getTransactions,
 } from '../utils/storage'
@@ -20,6 +22,11 @@ import {
   formatCurrency,
   getPeriodDateLabel,
 } from '../utils/calculations'
+
+import {
+  transactionMatchesSearch,
+  getSearchSuggestion,
+} from '../utils/transactionSearch'
 
 function Trends({
   period,
@@ -35,6 +42,9 @@ function Trends({
 
   const [activeTab, setActiveTab] =
     useState('expense')
+
+  const [searchQuery, setSearchQuery] =
+    useState('')
 
   const transactions =
     getTransactions()
@@ -82,6 +92,9 @@ function Trends({
       setCustomTo('')
     }
 
+  /*
+   * Filter first by selected period
+   */
   const filteredTransactions =
     period === 'custom'
       ? transactions.filter(
@@ -114,8 +127,29 @@ function Trends({
           period
         )
 
+  /*
+   * Search across BOTH expense
+   * and income transactions.
+   *
+   * This happens before the tabs
+   * are applied so the same search
+   * remains active when switching
+   * between Expense and Income.
+   */
+  const searchedTransactions =
+    filteredTransactions.filter(
+      (transaction) =>
+        transactionMatchesSearch(
+          transaction,
+          searchQuery
+        )
+    )
+
+  /*
+   * Now apply the Expense / Income tab
+   */
   const visibleTransactions =
-    filteredTransactions
+    searchedTransactions
       .filter(
         (transaction) =>
           transaction.type ===
@@ -127,6 +161,10 @@ function Trends({
           new Date(a.date)
       )
 
+  /*
+   * Total for the currently visible
+   * search results and selected tab.
+   */
   const visibleTotal =
     visibleTransactions.reduce(
       (total, transaction) =>
@@ -135,6 +173,17 @@ function Trends({
           transaction.amount || 0
         ),
       0
+    )
+
+  /*
+   * Suggestions use ALL historical
+   * transactions, not only the
+   * currently selected period.
+   */
+  const searchSuggestion =
+    getSearchSuggestion(
+      searchQuery,
+      transactions
     )
 
   const formatDate = (date) => {
@@ -157,18 +206,20 @@ function Trends({
   /*
    * Trends landing page
    *
-   * Later we can add more
-   * visualisation cards here.
+   * We can add additional
+   * visualisation cards here later.
    */
   if (trendScreen === 'menu') {
     return (
       <div className="min-h-screen bg-[#F7F5EF]">
+
         <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
           {/* Header */}
           <header className="mb-8 flex items-center gap-3">
 
             <button
+              type="button"
               onClick={onBack}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             >
@@ -176,6 +227,7 @@ function Trends({
             </button>
 
             <div>
+
               <h1 className="text-2xl font-bold text-gray-900">
                 Trends
               </h1>
@@ -183,6 +235,7 @@ function Trends({
               <p className="text-sm text-gray-500">
                 Understand how your farm is doing
               </p>
+
             </div>
 
           </header>
@@ -196,6 +249,7 @@ function Trends({
 
             {/* List View */}
             <button
+              type="button"
               onClick={() =>
                 setTrendScreen('list')
               }
@@ -236,6 +290,7 @@ function Trends({
           </p>
 
         </main>
+
       </div>
     )
   }
@@ -245,12 +300,14 @@ function Trends({
    */
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
+
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
         {/* Header */}
         <header className="mb-8 flex items-center gap-3">
 
           <button
+            type="button"
             onClick={() =>
               setTrendScreen('menu')
             }
@@ -260,6 +317,7 @@ function Trends({
           </button>
 
           <div>
+
             <h1 className="text-2xl font-bold text-gray-900">
               List View
             </h1>
@@ -267,6 +325,7 @@ function Trends({
             <p className="text-sm text-gray-500">
               Income and expense records
             </p>
+
           </div>
 
         </header>
@@ -319,13 +378,15 @@ function Trends({
 
           </div>
 
-  <p className="mt-2 px-1 text-sm text-gray-500">
-    {getPeriodDateLabel(
-      period,
-      customFrom,
-      customTo
-    )}
-  </p>
+          {/* Exact dates */}
+          <p className="mt-2 px-1 text-sm text-gray-500">
+            {getPeriodDateLabel(
+              period,
+              customFrom,
+              customTo
+            )}
+          </p>
+
         </section>
 
         {/* Custom Date Range */}
@@ -412,6 +473,13 @@ function Trends({
 
           </section>
         )}
+
+        {/* Search */}
+        <TransactionSearch
+          query={searchQuery}
+          onChange={setSearchQuery}
+          suggestion={searchSuggestion}
+        />
 
         {/* Expense / Income Tabs */}
         <section className="mb-5 rounded-2xl bg-white p-1.5 shadow-sm">
@@ -500,15 +568,21 @@ function Trends({
           <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
 
             <p className="text-sm font-medium text-gray-700">
-              No{' '}
-              {activeTab === 'expense'
-                ? 'expenses'
-                : 'income'}{' '}
-              found
+
+              {searchQuery
+                ? 'No matching records found'
+                : activeTab === 'expense'
+                  ? 'No expenses found'
+                  : 'No income found'}
+
             </p>
 
             <p className="mt-1 text-sm text-gray-400">
-              There are no records for this period.
+
+              {searchQuery
+                ? 'Try another word or check the suggested spelling.'
+                : 'There are no records for this period.'}
+
             </p>
 
           </section>
@@ -600,6 +674,7 @@ function Trends({
                             : 'bg-[#FCE8E4]'
                         }`}
                       >
+
                         {isIncome ? (
                           <TrendingUp
                             size={21}
@@ -609,24 +684,31 @@ function Trends({
                             size={21}
                           />
                         )}
+
                       </div>
 
                       <div className="min-w-0 flex-1">
 
                         <p className="font-medium text-gray-900">
+
                           {isIncome
                             ? transaction.crop
                             : transaction.expenseType}
+
                         </p>
 
                         <p className="mt-1 text-xs text-gray-500">
+
                           {isIncome
                             ? transaction.incomeType
                             : transaction.category}
+
                           {' · '}
+
                           {formatDate(
                             transaction.date
                           )}
+
                         </p>
 
                       </div>
@@ -638,12 +720,15 @@ function Trends({
                             : 'text-gray-700'
                         }`}
                       >
+
                         {isIncome
                           ? '+'
                           : '-'}
+
                         {formatCurrency(
                           transaction.amount
                         )}
+
                       </p>
 
                     </div>
@@ -657,23 +742,29 @@ function Trends({
                         </p>
 
                         <p className="mt-1 text-sm font-medium text-gray-700">
+
                           {Number(
                             transaction.quantity
                           ).toLocaleString(
                             'en-IN'
                           )}{' '}
+
                           {transaction.crop ===
                           'Coconut'
                             ? 'coconuts'
                             : 'kg'}
+
                           {' × '}
+
                           {formatCurrency(
                             transaction.rate
                           )}
+
                           {transaction.crop ===
                           'Coconut'
                             ? ' / coconut'
                             : ' / kg'}
+
                         </p>
 
                       </div>
@@ -695,22 +786,27 @@ function Trends({
                             </span>
 
                             <span className="text-right text-sm font-medium text-gray-900">
+
                               {menCount}
+
                               {' × '}
+
                               {formatCurrency(
                                 menRate
                               )}
+
                               {' = '}
+
                               {formatCurrency(
                                 menTotal
                               )}
+
                             </span>
 
                           </div>
                         )}
 
-                        {womenCount >
-                          0 && (
+                        {womenCount > 0 && (
                           <div className="flex items-center justify-between gap-3">
 
                             <span className="text-sm text-gray-700">
@@ -718,15 +814,21 @@ function Trends({
                             </span>
 
                             <span className="text-right text-sm font-medium text-gray-900">
+
                               {womenCount}
+
                               {' × '}
+
                               {formatCurrency(
                                 womenRate
                               )}
+
                               {' = '}
+
                               {formatCurrency(
                                 womenTotal
                               )}
+
                             </span>
 
                           </div>
@@ -744,15 +846,21 @@ function Trends({
                         </p>
 
                         <p className="text-sm font-medium text-gray-700">
+
                           {
                             transaction.numberOfPeople
                           }{' '}
+
                           people
+
                           {' × '}
+
                           {formatCurrency(
                             transaction.dailyCharge
                           )}
+
                           {' = '}
+
                           {formatCurrency(
                             Number(
                               transaction.numberOfPeople
@@ -761,6 +869,7 @@ function Trends({
                                 transaction.dailyCharge
                               )
                           )}
+
                         </p>
 
                       </div>
@@ -796,6 +905,7 @@ function Trends({
         </p>
 
       </main>
+
     </div>
   )
 }
