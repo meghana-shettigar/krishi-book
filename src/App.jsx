@@ -11,6 +11,7 @@ import Expense from './components/Expense'
 import Details from './components/Details'
 import Income from './components/Income'
 import Login from './components/Login'
+import Trends from './components/Trends'
 
 import {
   auth,
@@ -302,13 +303,7 @@ function App() {
     custom: 'Custom',
   }
 
-  const handleComingSoon =
-    (feature) => {
-      alert(
-        `${feature} will be added next.`
-      )
-    }
-
+  
   /*
    * Loading screen
    */
@@ -392,6 +387,21 @@ function App() {
       />
     )
   }
+  if (screen === 'trends') {
+  return (
+    <Trends
+      period={period}
+      setPeriod={setPeriod}
+      customFrom={customFrom}
+      setCustomFrom={setCustomFrom}
+      customTo={customTo}
+      setCustomTo={setCustomTo}
+      onBack={() =>
+        setScreen('home')
+      }
+    />
+  )
+}
 
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
@@ -706,9 +716,7 @@ function App() {
           {/* Trends */}
           <button
             onClick={() =>
-              handleComingSoon(
-                'Trends'
-              )
+               setScreen('trends')
             }
             className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
           >
