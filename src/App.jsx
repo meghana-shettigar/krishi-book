@@ -1,9 +1,4 @@
 import {
-  previewExpenseCategoryMigration,
-  migrateExpenseCategoriesToV2,
-} from './utils/categoryMigration'
-
-import {
   useEffect,
   useState,
 } from 'react'
@@ -87,23 +82,7 @@ function App() {
     migrationLoading,
     setMigrationLoading,
   ] = useState(false)
-/*
- * Temporary category migration tools
- * for the browser console.
- */
-useEffect(() => {
-  window.krishiMigration = {
-    preview:
-      previewExpenseCategoryMigration,
 
-    migrate:
-      migrateExpenseCategoriesToV2,
-  }
-
-  return () => {
-    delete window.krishiMigration
-  }
-}, [])
   /*
    * Watch Firebase login state
    */
