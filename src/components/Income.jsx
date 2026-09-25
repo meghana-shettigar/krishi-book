@@ -1,128 +1,242 @@
-import { useState } from 'react'
+import {
+  useState,
+} from 'react'
+
 import {
   ArrowLeft,
   ChevronDown,
   Save,
 } from 'lucide-react'
+
 import {
   saveTransaction,
   updateTransaction,
 } from '../utils/storage'
 
-const incomeTypes = {
-  Sold: [
-    'Coconut',
-    'Supari',
-    'Pepper',
-    'Vegetable',
-    'Other',
-  ],
-  'Agricultural benefit': [
-    'Agricultural benefit',
-  ],
-  Other: [
-    'Other',
-  ],
-}
+const SOLD_TYPES = [
+  'Coconut',
+  'Supari',
+  'Pepper',
+  'Vegetable',
+  'Other',
+]
 
-function Income({ onBack, existingTransaction }) {
-  const [incomeType, setIncomeType] = useState(
-    existingTransaction?.incomeType || ''
+const INCOME_TYPES = [
+  'Sold',
+  'Agricultural benefit',
+  'Other',
+]
+
+function Income({
+  onBack,
+  existingTransaction,
+}) {
+  const [
+    incomeType,
+    setIncomeType,
+  ] = useState(
+    existingTransaction
+      ?.incomeType || ''
   )
 
-  const [crop, setCrop] = useState(
-    existingTransaction?.crop || ''
+  const [crop, setCrop] =
+    useState(
+      existingTransaction?.crop ||
+        ''
+    )
+
+  const [
+    quantity,
+    setQuantity,
+  ] = useState(
+    existingTransaction
+      ?.quantity || ''
   )
 
-  const [quantity, setQuantity] = useState(
-    existingTransaction?.quantity || ''
-  )
+  const [rate, setRate] =
+    useState(
+      existingTransaction?.rate ||
+        ''
+    )
 
-  const [rate, setRate] = useState(
-    existingTransaction?.rate || ''
-  )
+  const [amount, setAmount] =
+    useState(
+      existingTransaction
+        ?.amount || ''
+    )
 
-  const [amount, setAmount] = useState(
-    existingTransaction?.amount || ''
-  )
+  const [date, setDate] =
+    useState(
+      existingTransaction?.date ||
+        new Date()
+          .toISOString()
+          .split('T')[0]
+    )
 
-  const [date, setDate] = useState(
-    existingTransaction?.date ||
-      new Date().toISOString().split('T')[0]
-  )
+  const [notes, setNotes] =
+    useState(
+      existingTransaction?.notes ||
+        ''
+    )
 
-  const [notes, setNotes] = useState(
-    existingTransaction?.notes || ''
-  )
-
-  const isSold = incomeType === 'Sold'
+  const isSold =
+    incomeType === 'Sold'
 
   const calculatedTotal =
-    Number(quantity || 0) * Number(rate || 0)
+    Number(quantity || 0) *
+    Number(rate || 0)
 
-  const finalAmount = isSold
-    ? calculatedTotal
-    : Number(amount || 0)
+  const finalAmount =
+    isSold
+      ? calculatedTotal
+      : Number(amount || 0)
+
+  const handleIncomeTypeChange =
+    (newType) => {
+      setIncomeType(
+        newType
+      )
+
+      /*
+       * Sold needs the crop/product
+       * dropdown.
+       *
+       * For the other two options we
+       * store the income type itself
+       * internally as crop. This keeps
+       * Details, Trends and Search fully
+       * compatible without making your
+       * parents choose it twice.
+       */
+      if (
+        newType === 'Sold'
+      ) {
+        setCrop('')
+      } else {
+        setCrop(
+          newType
+        )
+      }
+    }
 
   const handleSave = () => {
     if (!incomeType) {
-      alert('Please choose the income type.')
+      alert(
+        'Please choose the income type.'
+      )
+
       return
     }
 
-    if (!crop) {
-      alert('Please choose what you received money for.')
+    if (
+      isSold &&
+      !crop
+    ) {
+      alert(
+        'Please choose what you sold.'
+      )
+
       return
     }
 
-    if (finalAmount <= 0) {
-      alert('Please enter the amount.')
+    if (
+      finalAmount <= 0
+    ) {
+      alert(
+        'Please enter the amount.'
+      )
+
       return
     }
+
+    const resolvedCrop =
+      isSold
+        ? crop
+        : incomeType
 
     const income = {
-      id: existingTransaction?.id || Date.now(),
+      ...(existingTransaction ||
+        {}),
+
+      id:
+        existingTransaction?.id ||
+        Date.now(),
+
       type: 'income',
+
       incomeType,
-      crop,
-      amount: finalAmount,
-      quantity: isSold
-        ? Number(quantity)
-        : null,
-      rate: isSold
-        ? Number(rate)
-        : null,
+
+      crop:
+        resolvedCrop,
+
+      amount:
+        finalAmount,
+
+      quantity:
+        isSold
+          ? Number(
+              quantity
+            )
+          : null,
+
+      rate:
+        isSold
+          ? Number(rate)
+          : null,
+
       date,
+
       notes,
     }
 
-    if (existingTransaction) {
-      updateTransaction(income)
+    if (
+      existingTransaction
+    ) {
+      updateTransaction(
+        income
+      )
 
-      alert('Income updated successfully!')
+      alert(
+        'Income updated successfully!'
+      )
     } else {
-      saveTransaction(income)
+      saveTransaction(
+        income
+      )
 
-      alert('Income saved successfully!')
+      alert(
+        'Income saved successfully!'
+      )
     }
 
     onBack()
   }
 
+  const readyForDetails =
+    isSold
+      ? Boolean(crop)
+      : Boolean(incomeType)
+
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
+
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
         {/* Header */}
         <header className="mb-8 flex items-center gap-3">
+
           <button
+            type="button"
             onClick={onBack}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft
+              size={20}
+            />
           </button>
 
           <div>
+
             <h1 className="text-2xl font-bold text-gray-900">
               Record Income
             </h1>
@@ -130,11 +244,14 @@ function Income({ onBack, existingTransaction }) {
             <p className="text-sm text-gray-500">
               What money did you receive?
             </p>
+
           </div>
+
         </header>
 
         {/* Income Type */}
         <section className="mb-5">
+
           <label
             htmlFor="incomeType"
             className="mb-2 block text-sm font-medium text-gray-600"
@@ -143,59 +260,80 @@ function Income({ onBack, existingTransaction }) {
           </label>
 
           <div className="relative">
+
             <select
               id="incomeType"
-              value={incomeType}
-              onChange={(event) => {
-                setIncomeType(event.target.value)
-                setCrop('')
-              }}
+              value={
+                incomeType
+              }
+              onChange={(
+                event
+              ) =>
+                handleIncomeTypeChange(
+                  event.target
+                    .value
+                )
+              }
               className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-4 pr-10 text-base font-medium text-gray-900 outline-none"
             >
+
               <option value="">
                 Choose income type
               </option>
 
-              {Object.keys(incomeTypes).map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
+              {INCOME_TYPES.map(
+                (item) => (
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                )
+              )}
+
             </select>
 
             <ChevronDown
               size={20}
               className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
             />
+
           </div>
+
         </section>
 
-        {/* Crop / Income */}
-        {incomeType && (
+        {/* Sold product */}
+        {isSold && (
           <section className="mb-5">
+
             <label
               htmlFor="crop"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              {isSold
-                ? 'What did you sell?'
-                : 'What was the income for?'}
+              What did you sell?
             </label>
 
             <div className="relative">
+
               <select
                 id="crop"
                 value={crop}
-                onChange={(event) =>
-                  setCrop(event.target.value)
+                onChange={(
+                  event
+                ) =>
+                  setCrop(
+                    event.target.value
+                  )
                 }
                 className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-4 pr-10 text-base font-medium text-gray-900 outline-none"
               >
+
                 <option value="">
                   Choose
                 </option>
 
-                {incomeTypes[incomeType].map(
+                {SOLD_TYPES.map(
                   (item) => (
                     <option
                       key={item}
@@ -205,13 +343,16 @@ function Income({ onBack, existingTransaction }) {
                     </option>
                   )
                 )}
+
               </select>
 
               <ChevronDown
                 size={20}
                 className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
               />
+
             </div>
+
           </section>
         )}
 
@@ -225,53 +366,65 @@ function Income({ onBack, existingTransaction }) {
 
             {/* Quantity */}
             <div className="mb-4">
+
               <label
                 htmlFor="quantity"
                 className="mb-2 block text-sm font-medium text-gray-600"
               >
-                {crop === 'Coconut'
+                {crop ===
+                'Coconut'
                   ? 'Number of coconuts'
                   : 'Quantity (kg)'}
               </label>
 
               <div className="flex items-center rounded-xl border border-gray-200 bg-white">
+
                 <input
                   id="quantity"
                   type="number"
                   inputMode="decimal"
                   min="0"
-                  value={quantity}
-                  onChange={(event) =>
-                    setQuantity(event.target.value)
+                  value={
+                    quantity
                   }
-                  placeholder={
-                    crop === 'Coconut'
-                      ? '500'
-                      : '500'
+                  onChange={(
+                    event
+                  ) =>
+                    setQuantity(
+                      event.target
+                        .value
+                    )
                   }
+                  placeholder="500"
                   className="w-full rounded-xl px-4 py-4 text-base outline-none"
                 />
 
                 <span className="pr-4 text-sm text-gray-500">
-                  {crop === 'Coconut'
+                  {crop ===
+                  'Coconut'
                     ? 'coconuts'
                     : 'kg'}
                 </span>
+
               </div>
+
             </div>
 
             {/* Rate */}
             <div className="mb-4">
+
               <label
                 htmlFor="rate"
                 className="mb-2 block text-sm font-medium text-gray-600"
               >
-                {crop === 'Coconut'
+                {crop ===
+                'Coconut'
                   ? 'Rate per coconut'
                   : 'Rate per kg'}
               </label>
 
               <div className="flex items-center rounded-xl border border-gray-200 bg-white">
+
                 <span className="pl-4 text-gray-500">
                   ₹
                 </span>
@@ -282,38 +435,52 @@ function Income({ onBack, existingTransaction }) {
                   inputMode="decimal"
                   min="0"
                   value={rate}
-                  onChange={(event) =>
-                    setRate(event.target.value)
+                  onChange={(
+                    event
+                  ) =>
+                    setRate(
+                      event.target.value
+                    )
                   }
                   placeholder={
-                    crop === 'Coconut'
+                    crop ===
+                    'Coconut'
                       ? '25'
                       : '42'
                   }
                   className="w-full rounded-xl px-3 py-4 text-base outline-none"
                 />
+
               </div>
+
             </div>
 
-            {/* Total */}
-            {calculatedTotal > 0 && (
+            {calculatedTotal >
+              0 && (
               <div className="rounded-xl bg-[#E4F1E7] p-4">
+
                 <p className="text-sm text-gray-600">
                   Total sale
                 </p>
 
                 <p className="mt-1 text-2xl font-bold text-gray-900">
-                  ₹{calculatedTotal.toLocaleString('en-IN')}
+                  ₹
+                  {calculatedTotal.toLocaleString(
+                    'en-IN'
+                  )}
                 </p>
+
               </div>
             )}
 
           </section>
         )}
 
-        {/* Other income amount */}
-        {!isSold && crop && (
+        {/* Agricultural benefit / Other */}
+        {!isSold &&
+          incomeType && (
           <section className="mb-5">
+
             <label
               htmlFor="amount"
               className="mb-2 block text-sm font-medium text-gray-600"
@@ -322,6 +489,7 @@ function Income({ onBack, existingTransaction }) {
             </label>
 
             <div className="flex items-center rounded-xl border border-gray-200 bg-white">
+
               <span className="pl-4 text-gray-500">
                 ₹
               </span>
@@ -332,20 +500,28 @@ function Income({ onBack, existingTransaction }) {
                 inputMode="decimal"
                 min="0"
                 value={amount}
-                onChange={(event) =>
-                  setAmount(event.target.value)
+                onChange={(
+                  event
+                ) =>
+                  setAmount(
+                    event.target.value
+                  )
                 }
                 placeholder="5000"
                 className="w-full rounded-xl px-3 py-4 text-base outline-none"
               />
+
             </div>
+
           </section>
         )}
 
-        {/* Date and notes */}
-        {crop && (
+        {/* Date / Notes / Save */}
+        {readyForDetails && (
           <>
+
             <section className="mb-5">
+
               <label
                 htmlFor="date"
                 className="mb-2 block text-sm font-medium text-gray-600"
@@ -357,14 +533,20 @@ function Income({ onBack, existingTransaction }) {
                 id="date"
                 type="date"
                 value={date}
-                onChange={(event) =>
-                  setDate(event.target.value)
+                onChange={(
+                  event
+                ) =>
+                  setDate(
+                    event.target.value
+                  )
                 }
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
+                className="block w-full min-w-0 max-w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
               />
+
             </section>
 
             <section className="mb-6">
+
               <label
                 htmlFor="notes"
                 className="mb-2 block text-sm font-medium text-gray-600"
@@ -375,25 +557,36 @@ function Income({ onBack, existingTransaction }) {
               <textarea
                 id="notes"
                 value={notes}
-                onChange={(event) =>
-                  setNotes(event.target.value)
+                onChange={(
+                  event
+                ) =>
+                  setNotes(
+                    event.target.value
+                  )
                 }
                 placeholder="Optional"
                 rows="3"
                 className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
               />
+
             </section>
 
             <button
-              onClick={handleSave}
+              type="button"
+              onClick={
+                handleSave
+              }
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white shadow-sm transition active:scale-[0.98]"
             >
+
               <Save size={20} />
 
               {existingTransaction
                 ? 'Update Income'
                 : 'Save Income'}
+
             </button>
+
           </>
         )}
 
@@ -402,6 +595,7 @@ function Income({ onBack, existingTransaction }) {
         </p>
 
       </main>
+
     </div>
   )
 }

@@ -597,10 +597,13 @@ function Trends({
                   'income'
 
                 const isLabour =
-                  !isIncome &&
-                  transaction.category ===
-                    'Manual Labour'
-
+  !isIncome &&
+  (
+    transaction.category ===
+      'Labour' ||
+    transaction.category ===
+      'Manual Labour'
+  )
                 const hasSaleDetails =
                   isIncome &&
                   transaction.quantity !=

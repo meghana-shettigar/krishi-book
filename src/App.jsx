@@ -12,6 +12,7 @@ import Details from './components/Details'
 import Income from './components/Income'
 import Login from './components/Login'
 import Trends from './components/Trends'
+import Contacts from './components/Contacts'
 
 import {
   auth,
@@ -40,6 +41,7 @@ import {
   ArrowRight,
   Sprout,
   CloudUpload,
+  Users,
 } from 'lucide-react'
 
 function App() {
@@ -403,6 +405,15 @@ function App() {
     />
   )
 }
+if (screen === 'contacts') {
+  return (
+    <Contacts
+      onBack={() =>
+        setScreen('home')
+      }
+    />
+  )
+}
 
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
@@ -720,7 +731,32 @@ function App() {
             </div>
 
           </button>
+{/* Farm Contacts */}
+<button
+  type="button"
+  onClick={() =>
+    setScreen('contacts')
+  }
+  className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
+>
 
+  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E8F0F7]">
+    <Users size={25} />
+  </div>
+
+  <div>
+
+    <p className="text-base font-semibold text-gray-900">
+      Farm Contacts
+    </p>
+
+    <p className="mt-1 text-sm text-gray-500">
+      Labour, buyers and farm services
+    </p>
+
+  </div>
+
+</button>
           {/* Trends */}
           <button
             onClick={() =>

@@ -15,6 +15,8 @@ const getTransactionText = (transaction) => {
     transaction.category,
     transaction.expenseType,
 
+    transaction.legacyCategory,
+    transaction.legacyExpenseType,
     // Income
     transaction.incomeType,
     transaction.crop,
@@ -55,10 +57,12 @@ const getTransactionText = (transaction) => {
     values.push('women')
   }
 
-  if (
-    transaction.category ===
+if (
+  transaction.category ===
+    'Labour' ||
+  transaction.category ===
     'Manual Labour'
-  ) {
+) {
     values.push(
       'manual',
       'labour',
