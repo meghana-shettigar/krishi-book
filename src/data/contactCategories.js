@@ -63,12 +63,25 @@ export const CONTACT_CATEGORIES = [
     },
   },
 
+  /*
+   * Keep the old ID "crop-supplies".
+   *
+   * This means any existing contact
+   * previously saved as Farm Supplies
+   * automatically uses this new label.
+   *
+   * We do NOT set expenseType here
+   * because this contact might supply
+   * fertilizer, chunna, compost OR
+   * pesticide.
+   */
   {
     id: 'crop-supplies',
-    label: 'Farm Supplies',
+    label:
+      'Fertiliser / Chunna / Compost / Pesticide',
     icon: '🧪',
     description:
-      'Fertilizer, chunna, pesticide, plants, seeds or compost',
+      'Fertiliser, chunna, compost and pesticide supplier',
     ledgerDefaults: {
       type: 'expense',
       category: 'Crop',
@@ -76,8 +89,31 @@ export const CONTACT_CATEGORIES = [
   },
 
   /*
-   * Kept separate from Borewell because
-   * these may be handled by different people.
+   * Nursery is more specific.
+   *
+   * Since New Plants and New Seeds
+   * have already been merged into
+   * "New Plants / Seeds", this role
+   * can safely pre-fill both category
+   * and expenseType.
+   */
+  {
+    id: 'nursery',
+    label: 'Nursery',
+    icon: '🪴',
+    description:
+      'New plants, saplings and seeds',
+    ledgerDefaults: {
+      type: 'expense',
+      category: 'Crop',
+      expenseType:
+        'New Plants / Seeds',
+    },
+  },
+
+  /*
+   * Pipe / sprinkler / water contacts
+   * remain separate from Borewell.
    */
   {
     id: 'water-service',
@@ -97,6 +133,14 @@ export const CONTACT_CATEGORIES = [
     },
   },
 
+  /*
+   * Borewell is a separate Contact Book
+   * category because it may be handled
+   * by a completely different person.
+   *
+   * It still goes to the same Expense
+   * category in the ledger.
+   */
   {
     id: 'borewell-service',
     label: 'Borewell',
@@ -185,8 +229,7 @@ export function getContactCategory(
   return (
     CONTACT_CATEGORIES.find(
       (category) =>
-        category.id ===
-        roleId
+        category.id === roleId
     ) ||
     CONTACT_CATEGORIES[
       CONTACT_CATEGORIES.length -

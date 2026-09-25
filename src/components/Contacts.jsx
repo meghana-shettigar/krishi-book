@@ -139,16 +139,43 @@ function Contacts({
                 contact.roleId
               )
 
-            const searchableText = [
-              contact.name,
-              contact.phone,
-              category.label,
-              category.description,
-              contact.notes,
-            ]
-              .filter(Boolean)
-              .join(' ')
-              .toLowerCase()
+const searchableText = [
+  /*
+   * Contact information
+   */
+  contact.name,
+  contact.phone,
+
+  /*
+   * Contact Book category
+   */
+  category.label,
+  category.description,
+
+  /*
+   * Underlying Krishi Book
+   * ledger classification.
+   *
+   * This means users can search
+   * using either the Contact Book
+   * wording OR the Expense/Income
+   * wording.
+   */
+  category.ledgerDefaults?.type,
+  category.ledgerDefaults?.category,
+  category.ledgerDefaults?.expenseType,
+  category.ledgerDefaults?.incomeType,
+  category.ledgerDefaults?.crop,
+
+  /*
+   * Any words manually entered
+   * in the notes.
+   */
+  contact.notes,
+]
+  .filter(Boolean)
+  .join(' ')
+  .toLowerCase()
 
             return searchableText.includes(
               query
@@ -535,12 +562,9 @@ function Contacts({
                 </p>
 
                 <p className="mt-1 text-sm leading-5 text-gray-500">
-                  Remember that this contact can be shared in the farm community directory later.
+                  This contact will be shared in the farm community directory.
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-gray-400">
-                  Nothing is publicly visible yet. We will build the shared directory separately.
-                </p>
 
               </div>
 
@@ -750,7 +774,7 @@ function Contacts({
 
                         {contact.makePublic && (
                           <p className="mt-2 text-xs font-medium text-gray-400">
-                            🌐 Public directory preference
+                            🌐 Public directory
                           </p>
                         )}
 
