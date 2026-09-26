@@ -13,6 +13,8 @@ import Income from './components/Income'
 import Login from './components/Login'
 import Trends from './components/Trends'
 import Contacts from './components/Contacts'
+import WeatherBar from './components/WeatherBar'
+import FarmWeather from './components/FarmWeather'
 
 import {
   auth,
@@ -415,12 +417,22 @@ if (screen === 'contacts') {
   )
 }
 
+if (screen === 'weather') {
+  return (
+    <FarmWeather
+      onBack={() =>
+        setScreen('home')
+      }
+    />
+  )
+}
+
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
         {/* Header */}
-        <header className="mb-8">
+        <header className="mb-5">
           <div className="flex items-center gap-3">
 
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#E4EFD9]">
@@ -439,7 +451,12 @@ if (screen === 'contacts') {
 
           </div>
         </header>
-
+{/* Farm Weather */}
+<WeatherBar
+  onOpen={() =>
+    setScreen('weather')
+  }
+/>
         {/* Migration */}
         {needsMigration && (
           <section className="mb-6 rounded-2xl border border-[#D6E6C7] bg-[#EDF5E7] p-5">
