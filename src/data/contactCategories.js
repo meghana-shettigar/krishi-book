@@ -5,6 +5,16 @@ export const CONTACT_CATEGORIES = [
     icon: '👷',
     description:
       'Workers, cleaning, planting and other farm work',
+
+    /*
+     * Automatic public-directory
+     * service radius.
+     *
+     * The farmer never needs to
+     * choose or understand this.
+     */
+    publicRadiusKm: 15,
+
     ledgerDefaults: {
       type: 'expense',
       category: 'Labour',
@@ -17,6 +27,9 @@ export const CONTACT_CATEGORIES = [
     icon: '🥥',
     description:
       'Person who buys coconuts',
+
+    publicRadiusKm: 20,
+
     ledgerDefaults: {
       type: 'income',
       incomeType: 'Sold',
@@ -30,6 +43,9 @@ export const CONTACT_CATEGORIES = [
     icon: '🌰',
     description:
       'Person who buys supari / arecanut',
+
+    publicRadiusKm: 30,
+
     ledgerDefaults: {
       type: 'income',
       incomeType: 'Sold',
@@ -43,6 +59,9 @@ export const CONTACT_CATEGORIES = [
     icon: '🌿',
     description:
       'Person who buys pepper',
+
+    publicRadiusKm: 25,
+
     ledgerDefaults: {
       type: 'income',
       incomeType: 'Sold',
@@ -56,6 +75,9 @@ export const CONTACT_CATEGORIES = [
     icon: '🥬',
     description:
       'Person who buys vegetables',
+
+    publicRadiusKm: 15,
+
     ledgerDefaults: {
       type: 'income',
       incomeType: 'Sold',
@@ -64,16 +86,9 @@ export const CONTACT_CATEGORIES = [
   },
 
   /*
-   * Keep the old ID "crop-supplies".
-   *
-   * This means any existing contact
-   * previously saved as Farm Supplies
-   * automatically uses this new label.
-   *
-   * We do NOT set expenseType here
-   * because this contact might supply
-   * fertilizer, chunna, compost OR
-   * pesticide.
+   * Keep the old ID "crop-supplies"
+   * so existing contacts continue
+   * to work.
    */
   {
     id: 'crop-supplies',
@@ -82,27 +97,24 @@ export const CONTACT_CATEGORIES = [
     icon: '🧪',
     description:
       'Fertiliser, chunna, compost and pesticide supplier',
+
+    publicRadiusKm: 15,
+
     ledgerDefaults: {
       type: 'expense',
       category: 'Crop',
     },
   },
 
-  /*
-   * Nursery is more specific.
-   *
-   * Since New Plants and New Seeds
-   * have already been merged into
-   * "New Plants / Seeds", this role
-   * can safely pre-fill both category
-   * and expenseType.
-   */
   {
     id: 'nursery',
     label: 'Nursery',
     icon: '🪴',
     description:
       'New plants, saplings and seeds',
+
+    publicRadiusKm: 25,
+
     ledgerDefaults: {
       type: 'expense',
       category: 'Crop',
@@ -111,10 +123,6 @@ export const CONTACT_CATEGORIES = [
     },
   },
 
-  /*
-   * Pipe / sprinkler / water contacts
-   * remain separate from Borewell.
-   */
   {
     id: 'water-service',
     label:
@@ -122,6 +130,9 @@ export const CONTACT_CATEGORIES = [
     icon: '💧',
     description:
       'Pipe, sprinkler, pump, tank and other water work',
+
+    publicRadiusKm: 20,
+
     ledgerDefaults: {
       type: 'expense',
 
@@ -133,20 +144,15 @@ export const CONTACT_CATEGORIES = [
     },
   },
 
-  /*
-   * Borewell is a separate Contact Book
-   * category because it may be handled
-   * by a completely different person.
-   *
-   * It still goes to the same Expense
-   * category in the ledger.
-   */
   {
     id: 'borewell-service',
     label: 'Borewell',
     icon: '💧',
     description:
       'Borewell drilling or borewell service',
+
+    publicRadiusKm: 40,
+
     ledgerDefaults: {
       type: 'expense',
 
@@ -165,6 +171,9 @@ export const CONTACT_CATEGORIES = [
     icon: '🚜',
     description:
       'Tractor, machine, vehicle, transport or tools',
+
+    publicRadiusKm: 25,
+
     ledgerDefaults: {
       type: 'expense',
 
@@ -183,6 +192,9 @@ export const CONTACT_CATEGORIES = [
     icon: '🌱',
     description:
       'Land work, fencing, boundary, road or drainage',
+
+    publicRadiusKm: 25,
+
     ledgerDefaults: {
       type: 'expense',
 
@@ -201,6 +213,15 @@ export const CONTACT_CATEGORIES = [
     icon: '🏢',
     description:
       'Agriculture, horticulture or government benefit contact',
+
+    /*
+     * For government offices this
+     * represents a discovery area,
+     * rather than how far an officer
+     * personally travels.
+     */
+    publicRadiusKm: 30,
+
     ledgerDefaults: {
       type: 'income',
 
@@ -219,6 +240,9 @@ export const CONTACT_CATEGORIES = [
     icon: '👤',
     description:
       'Any other farm-related person or service',
+
+    publicRadiusKm: 15,
+
     ledgerDefaults: {},
   },
 ]
