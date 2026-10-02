@@ -15,10 +15,20 @@ import Trends from './components/Trends'
 import Contacts from './components/Contacts'
 import WeatherBar from './components/WeatherBar'
 import FarmWeather from './components/FarmWeather'
+import FarmLocationSetup from './components/FarmLocationSetup'
+import Profile from './components/Profile'
 
 import {
   auth,
 } from './firebase/firebase'
+
+import {
+  ensureUserProfile,
+} from './utils/profileStorage'
+
+import {
+  prepareDeviceForUser,
+} from './utils/deviceCache'
 
 import {
   getTransactions,
@@ -44,6 +54,7 @@ import {
   Sprout,
   CloudUpload,
   Users,
+  User,
 } from 'lucide-react'
 
 function App() {
@@ -67,6 +78,17 @@ function App() {
   const [user, setUser] =
     useState(null)
 
+    const [
+  profile,
+  setProfile,
+] = useState(null)
+
+const [
+  profileLoading,
+  setProfileLoading,
+] = useState(true)
+
+
   const [authLoading, setAuthLoading] =
     useState(true)
 
@@ -88,18 +110,98 @@ function App() {
   /*
    * Watch Firebase login state
    */
-  useEffect(() => {
-    const unsubscribe =
-      onAuthStateChanged(
-        auth,
-        (firebaseUser) => {
-          setUser(firebaseUser)
-          setAuthLoading(false)
+/*
+ * Watch Firebase login state
+ */
+useEffect(() => {
+  const unsubscribe =
+    onAuthStateChanged(
+      auth,
+      (firebaseUser) => {
+        /*
+         * If another account uses
+         * this device, remove the
+         * previous account's
+         * temporary browser cache.
+         */
+        if (firebaseUser) {
+          prepareDeviceForUser(
+            firebaseUser.uid
+          )
         }
-      )
 
-    return unsubscribe
-  }, [])
+        setUser(
+          firebaseUser
+        )
+
+        if (!firebaseUser) {
+          setProfile(null)
+          setProfileLoading(
+            false
+          )
+        }
+
+        setAuthLoading(
+          false
+        )
+      }
+    )
+
+  return unsubscribe
+}, [])
+
+/*
+ * Load/create the user's profile.
+ *
+ * Existing parents' accounts will
+ * automatically get a profile
+ * document without changing their
+ * old transactions or contacts.
+ */
+useEffect(() => {
+  if (!user) {
+    return
+  }
+
+  let cancelled = false
+
+  const loadProfile =
+    async () => {
+      try {
+        setProfileLoading(
+          true
+        )
+
+        const userProfile =
+          await ensureUserProfile(
+            user
+          )
+
+        if (!cancelled) {
+          setProfile(
+            userProfile
+          )
+        }
+      } catch (error) {
+        console.error(
+          'Unable to load user profile:',
+          error
+        )
+      } finally {
+        if (!cancelled) {
+          setProfileLoading(
+            false
+          )
+        }
+      }
+    }
+
+  loadProfile()
+
+  return () => {
+    cancelled = true
+  }
+}, [user])
 
   /*
    * Start cloud sync after login
@@ -312,7 +414,13 @@ function App() {
   /*
    * Loading screen
    */
-  if (authLoading) {
+if (
+  authLoading ||
+  (
+    user &&
+    profileLoading
+  )
+) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F5EF]">
         <p className="text-sm text-gray-500">
@@ -328,7 +436,32 @@ function App() {
   if (!user) {
     return <Login />
   }
-
+/*
+ * First-time farm setup.
+ *
+ * This will also appear once for
+ * the existing parents account
+ * because it was created before
+ * farm profiles existed.
+ */
+if (
+  !profile
+    ?.farmLocation
+    ?.confirmed
+) {
+  return (
+    <FarmLocationSetup
+      showAccountSwitch
+      onSaved={(
+        updatedProfile
+      ) =>
+        setProfile(
+          updatedProfile
+        )
+      }
+    />
+  )
+}
   /*
    * Expense screen
    */
@@ -416,12 +549,41 @@ if (screen === 'contacts') {
     />
   )
 }
+if (
+  screen === 'profile'
+) {
+  return (
+    <Profile
+      user={user}
+      profile={
+        profile
+      }
+      onBack={() =>
+        setScreen(
+          'home'
+        )
+      }
+      onProfileChanged={(
+        updatedProfile
+      ) =>
+        setProfile(
+          updatedProfile
+        )
+      }
+    />
+  )
+}
 
 if (screen === 'weather') {
   return (
     <FarmWeather
+      farmLocation={
+        profile.farmLocation
+      }
       onBack={() =>
-        setScreen('home')
+        setScreen(
+          'home'
+        )
       }
     />
   )
@@ -432,29 +594,64 @@ if (screen === 'weather') {
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
         {/* Header */}
-        <header className="mb-5">
-          <div className="flex items-center gap-3">
+<header className="mb-5">
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#E4EFD9]">
-              <Sprout size={24} />
-            </div>
+  <div className="flex items-center justify-between gap-3">
 
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Krishi Book
-              </h1>
+    <div className="flex min-w-0 items-center gap-3">
 
-              <p className="text-sm text-gray-500">
-                Your farm ledger
-              </p>
-            </div>
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E4EFD9]">
 
-          </div>
-        </header>
+        <Sprout
+          size={24}
+        />
+
+      </div>
+
+      <div className="min-w-0">
+
+        <h1 className="text-2xl font-bold text-gray-900">
+          Krishi Book
+        </h1>
+
+        <p className="text-sm text-gray-500">
+          Your farm ledger
+        </p>
+
+      </div>
+
+    </div>
+
+    {/* Profile */}
+    <button
+      type="button"
+      onClick={() =>
+        setScreen(
+          'profile'
+        )
+      }
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm"
+      aria-label="Profile"
+    >
+
+      <User
+        size={22}
+      />
+
+    </button>
+
+  </div>
+
+</header>
 {/* Farm Weather */}
 <WeatherBar
+  farmLocation={
+    profile.farmLocation
+  }
   onOpen={() =>
-    setScreen('weather')
+    setScreen(
+      'weather'
+    )
   }
 />
         {/* Migration */}

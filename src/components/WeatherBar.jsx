@@ -10,16 +10,13 @@ import {
 import WeatherIcon from './WeatherIcon'
 
 import {
-  FARM_LOCATION,
-} from '../config/farmLocation'
-
-import {
   getFarmWeather,
   getWeatherBarSummary,
 } from '../utils/weather'
 
 function WeatherBar({
   onOpen,
+  farmLocation,
 }) {
   const [
     weather,
@@ -42,8 +39,13 @@ function WeatherBar({
     const loadWeather =
       async () => {
         try {
+          setLoading(true)
+
           const result =
-            await getFarmWeather()
+            await getFarmWeather({
+              location:
+                farmLocation,
+            })
 
           if (!cancelled) {
             setWeather(
@@ -73,16 +75,22 @@ function WeatherBar({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [
+    farmLocation?.latitude,
+    farmLocation?.longitude,
+  ])
 
-  /*
-   * Loading
-   */
+  const placeName =
+    farmLocation?.placeName ||
+    'Farm location'
+
   if (loading) {
     return (
       <button
         type="button"
-        onClick={onOpen}
+        onClick={
+          onOpen
+        }
         className="mb-6 flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm transition active:scale-[0.99]"
       >
 
@@ -98,11 +106,8 @@ function WeatherBar({
 
         <div className="min-w-0 flex-1">
 
-          <p className="text-xs font-medium text-gray-500">
-            {
-              FARM_LOCATION
-                .displayName
-            }
+          <p className="truncate text-xs font-medium text-gray-500">
+            {placeName}
           </p>
 
           <p className="mt-1 text-sm font-semibold text-gray-900">
@@ -120,9 +125,6 @@ function WeatherBar({
     )
   }
 
-  /*
-   * No weather available
-   */
   if (
     error ||
     !weather
@@ -130,7 +132,9 @@ function WeatherBar({
     return (
       <button
         type="button"
-        onClick={onOpen}
+        onClick={
+          onOpen
+        }
         className="mb-6 flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm transition active:scale-[0.99]"
       >
 
@@ -146,11 +150,8 @@ function WeatherBar({
 
         <div className="min-w-0 flex-1">
 
-          <p className="text-xs font-medium text-gray-500">
-            {
-              FARM_LOCATION
-                .displayName
-            }
+          <p className="truncate text-xs font-medium text-gray-500">
+            {placeName}
           </p>
 
           <p className="mt-1 text-sm font-semibold text-gray-900">
@@ -180,7 +181,9 @@ function WeatherBar({
   return (
     <button
       type="button"
-      onClick={onOpen}
+      onClick={
+        onOpen
+      }
       className="mb-6 flex w-full items-center gap-4 rounded-2xl border border-[#E2E8DC] bg-[#F3F7EF] p-4 text-left shadow-sm transition active:scale-[0.99]"
     >
 
@@ -202,7 +205,8 @@ function WeatherBar({
 
         <p className="truncate text-xs font-medium text-gray-500">
           {
-            weather.location
+            weather
+              .location
               .displayName
           }
         </p>

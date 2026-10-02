@@ -1,6 +1,3 @@
-import {
-  FARM_LOCATION,
-} from '../config/farmLocation'
 
 const WEATHER_CACHE_KEY =
   'krishiBookFarmWeatherV1'
@@ -17,7 +14,28 @@ const RAIN_PROBABILITY_THRESHOLD =
  * --------------------------------
  */
 
-function readWeatherCache() {
+function getLocationKey(
+  location
+) {
+  if (
+    location?.latitude ==
+      null ||
+    location?.longitude ==
+      null
+  ) {
+    return ''
+  }
+
+  return `${Number(
+    location.latitude
+  ).toFixed(5)},${Number(
+    location.longitude
+  ).toFixed(5)}`
+}
+
+function readWeatherCache(
+  location
+) {
   try {
     const raw =
       localStorage.getItem(
@@ -28,7 +46,23 @@ function readWeatherCache() {
       return null
     }
 
-    return JSON.parse(raw)
+    const cached =
+      JSON.parse(raw)
+
+    /*
+     * Never reuse weather from
+     * another farm location.
+     */
+    if (
+      cached.locationKey !==
+      getLocationKey(
+        location
+      )
+    ) {
+      return null
+    }
+
+    return cached
   } catch (error) {
     console.error(
       'Unable to read weather cache:',
@@ -39,12 +73,22 @@ function readWeatherCache() {
   }
 }
 
-function saveWeatherCache(data) {
+function saveWeatherCache(
+  data,
+  location
+) {
   try {
     localStorage.setItem(
       WEATHER_CACHE_KEY,
       JSON.stringify({
-        savedAt: Date.now(),
+        savedAt:
+          Date.now(),
+
+        locationKey:
+          getLocationKey(
+            location
+          ),
+
         data,
       })
     )
@@ -62,7 +106,9 @@ function saveWeatherCache(data) {
  * --------------------------------
  */
 
-function buildWeatherUrl() {
+function buildWeatherUrl(
+  location
+) {
   const url = new URL(
     'https://api.open-meteo.com/v1/forecast'
   )
@@ -70,22 +116,21 @@ function buildWeatherUrl() {
   url.searchParams.set(
     'latitude',
     String(
-      FARM_LOCATION.latitude
+      location.latitude
     )
   )
 
   url.searchParams.set(
     'longitude',
     String(
-      FARM_LOCATION.longitude
+      location.longitude
     )
   )
 
-  url.searchParams.set(
-    'timezone',
-    FARM_LOCATION.timezone
-  )
-
+url.searchParams.set(
+  'timezone',
+  'auto'
+)
   url.searchParams.set(
     'forecast_days',
     '4'
@@ -163,17 +208,34 @@ function buildWeatherUrl() {
 
 export async function getFarmWeather({
   force = false,
+  location,
 } = {}) {
+  if (
+    location?.latitude ==
+      null ||
+    location?.longitude ==
+      null
+  ) {
+    throw new Error(
+      'Farm location has not been set.'
+    )
+  }
+
   const cached =
-    readWeatherCache()
+    readWeatherCache(
+      location
+    )
 
   /*
-   * Reuse a recent forecast.
+   * Reuse recent weather only
+   * when it belongs to the same
+   * farm location.
    */
   if (
     !force &&
     cached?.data &&
-    Date.now() - cached.savedAt <
+    Date.now() -
+      cached.savedAt <
       WEATHER_CACHE_MS
   ) {
     return {
@@ -187,7 +249,9 @@ export async function getFarmWeather({
   try {
     const response =
       await fetch(
-        buildWeatherUrl()
+        buildWeatherUrl(
+          location
+        )
       )
 
     if (!response.ok) {
@@ -200,15 +264,20 @@ export async function getFarmWeather({
       await response.json()
 
     const weather = {
-      location:
-        FARM_LOCATION,
+      location: {
+        ...location,
+
+        displayName:
+          location.placeName ||
+          'Farm location',
+      },
 
       fetchedAt:
         Date.now(),
 
       timezone:
         forecast.timezone ||
-        FARM_LOCATION.timezone,
+        'Asia/Kolkata',
 
       current:
         forecast.current,
@@ -221,7 +290,8 @@ export async function getFarmWeather({
     }
 
     saveWeatherCache(
-      weather
+      weather,
+      location
     )
 
     return {
@@ -232,8 +302,9 @@ export async function getFarmWeather({
     }
   } catch (error) {
     /*
-     * If internet/weather API fails,
-     * still show the last forecast.
+     * If weather API fails,
+     * use the last forecast only
+     * when it belongs to this farm.
      */
     if (cached?.data) {
       return {
@@ -1775,7 +1846,9 @@ export function getDailyForecast(
 
 export function formatForecastDate(
   date,
-  index = 0
+  index = 0,
+  timezone =
+    'Asia/Kolkata'
 ) {
   if (index === 0) {
     return 'Today'
@@ -1789,20 +1862,25 @@ export function formatForecastDate(
   return parsed.toLocaleDateString(
     'en-IN',
     {
-      weekday: 'short',
+      weekday:
+        'short',
 
-      day: 'numeric',
+      day:
+        'numeric',
 
-      month: 'short',
+      month:
+        'short',
 
       timeZone:
-        FARM_LOCATION.timezone,
+        timezone,
     }
   )
 }
 
 export function formatWeatherUpdatedTime(
-  timestamp
+  timestamp,
+  timezone =
+    'Asia/Kolkata'
 ) {
   if (!timestamp) {
     return ''
@@ -1813,12 +1891,14 @@ export function formatWeatherUpdatedTime(
   ).toLocaleTimeString(
     'en-IN',
     {
-      hour: 'numeric',
+      hour:
+        'numeric',
 
-      minute: '2-digit',
+      minute:
+        '2-digit',
 
       timeZone:
-        FARM_LOCATION.timezone,
+        timezone,
     }
   )
 }

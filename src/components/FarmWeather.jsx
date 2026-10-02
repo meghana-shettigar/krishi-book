@@ -132,6 +132,7 @@ function AdviceSection({
 
 function FarmWeather({
   onBack,
+  farmLocation,
 }) {
   const [
     weather,
@@ -166,10 +167,13 @@ function FarmWeather({
 
         setError('')
 
-        const result =
-          await getFarmWeather({
-            force,
-          })
+     const result =
+  await getFarmWeather({
+    force,
+
+    location:
+      farmLocation,
+  })
 
         setWeather(
           result
@@ -189,9 +193,12 @@ function FarmWeather({
       }
     }
 
-  useEffect(() => {
-    loadWeather()
-  }, [])
+useEffect(() => {
+  loadWeather()
+}, [
+  farmLocation?.latitude,
+  farmLocation?.longitude,
+])
 
   /*
    * Loading
@@ -846,10 +853,11 @@ const feelsLike =
                     <div className="w-20 shrink-0">
 
                       <p className="text-sm font-medium text-gray-700">
-                        {formatForecastDate(
-                          day.date,
-                          index
-                        )}
+                  {formatForecastDate(
+  day.date,
+  index,
+  weather.timezone
+)}
                       </p>
 
                     </div>
@@ -944,8 +952,9 @@ const feelsLike =
 
           Updated{' '}
           {formatWeatherUpdatedTime(
-            weather.fetchedAt
-          )}
+  weather.fetchedAt,
+  weather.timezone
+)}
 
           {' · '}
 
