@@ -1,7 +1,17 @@
-export function getStartDate(period) {
-  const today = new Date()
+import {
+  formatAppDate,
+  translateUi,
+} from '../i18n/translations'
 
-  if (period === 'day') {
+export function getStartDate(
+  period
+) {
+  const today =
+    new Date()
+
+  if (
+    period === 'day'
+  ) {
     return new Date(
       today.getFullYear(),
       today.getMonth(),
@@ -9,7 +19,9 @@ export function getStartDate(period) {
     )
   }
 
-  if (period === 'month') {
+  if (
+    period === 'month'
+  ) {
     return new Date(
       today.getFullYear(),
       today.getMonth(),
@@ -17,7 +29,9 @@ export function getStartDate(period) {
     )
   }
 
-  if (period === 'year') {
+  if (
+    period === 'year'
+  ) {
     return new Date(
       today.getFullYear(),
       0,
@@ -32,91 +46,142 @@ export function filterTransactions(
   transactions,
   period
 ) {
-  const startDate = getStartDate(period)
+  const startDate =
+    getStartDate(
+      period
+    )
 
   if (!startDate) {
     return transactions
   }
 
-  return transactions.filter((transaction) => {
-    const transactionDate = new Date(
-      `${transaction.date}T00:00:00`
-    )
+  return transactions.filter(
+    (
+      transaction
+    ) => {
+      const transactionDate =
+        new Date(
+          `${transaction.date}T00:00:00`
+        )
 
-    return transactionDate >= startDate
-  })
+      return (
+        transactionDate >=
+        startDate
+      )
+    }
+  )
 }
 
-export function calculateTotals(transactions) {
-  const income = transactions
-    .filter(
-      (transaction) =>
-        transaction.type === 'income'
-    )
-    .reduce(
-      (total, transaction) =>
-        total + Number(transaction.amount || 0),
-      0
-    )
+export function calculateTotals(
+  transactions
+) {
+  const income =
+    transactions
+      .filter(
+        (
+          transaction
+        ) =>
+          transaction.type ===
+          'income'
+      )
+      .reduce(
+        (
+          total,
+          transaction
+        ) =>
+          total +
+          Number(
+            transaction.amount ||
+            0
+          ),
+        0
+      )
 
-  const expenses = transactions
-    .filter(
-      (transaction) =>
-        transaction.type === 'expense'
-    )
-    .reduce(
-      (total, transaction) =>
-        total + Number(transaction.amount || 0),
-      0
-    )
-
-  const profitLoss = income - expenses
+  const expenses =
+    transactions
+      .filter(
+        (
+          transaction
+        ) =>
+          transaction.type ===
+          'expense'
+      )
+      .reduce(
+        (
+          total,
+          transaction
+        ) =>
+          total +
+          Number(
+            transaction.amount ||
+            0
+          ),
+        0
+      )
 
   return {
     income,
+
     expenses,
-    profitLoss,
+
+    profitLoss:
+      income -
+      expenses,
   }
 }
 
-export function formatCurrency(amount) {
-  return `₹${Number(amount).toLocaleString('en-IN')}`
+/*
+ * Always keep digits as 0-9.
+ */
+export function formatCurrency(
+  amount
+) {
+  return `₹${Number(
+    amount
+  ).toLocaleString(
+    'en-IN'
+  )}`
 }
 
 export function getPeriodDateLabel(
   period,
   customFrom = '',
-  customTo = ''
+  customTo = '',
+  language = 'en'
 ) {
-  const today = new Date()
+  const today =
+    new Date()
 
-  const formatDate = (date) =>
-    date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
+  const formatDate =
+    (
+      value
+    ) =>
+      formatAppDate(
+        value,
+        language,
+        {
+          day:
+            'numeric',
 
-  const parseDate = (dateString) => {
-    if (!dateString) {
-      return null
-    }
+          month:
+            'short',
 
-    const [year, month, day] =
-      dateString.split('-').map(Number)
+          year:
+            'numeric',
+        }
+      )
 
-    return new Date(
-      year,
-      month - 1,
-      day
+  if (
+    period === 'day'
+  ) {
+    return formatDate(
+      today
     )
   }
 
-  if (period === 'day') {
-    return formatDate(today)
-  }
-
-  if (period === 'month') {
+  if (
+    period === 'month'
+  ) {
     const firstDay =
       new Date(
         today.getFullYear(),
@@ -127,16 +192,21 @@ export function getPeriodDateLabel(
     const lastDay =
       new Date(
         today.getFullYear(),
-        today.getMonth() + 1,
+        today.getMonth() +
+          1,
         0
       )
 
     return `${formatDate(
       firstDay
-    )} – ${formatDate(lastDay)}`
+    )} – ${formatDate(
+      lastDay
+    )}`
   }
 
-  if (period === 'year') {
+  if (
+    period === 'year'
+  ) {
     const firstDay =
       new Date(
         today.getFullYear(),
@@ -153,35 +223,55 @@ export function getPeriodDateLabel(
 
     return `${formatDate(
       firstDay
-    )} – ${formatDate(lastDay)}`
+    )} – ${formatDate(
+      lastDay
+    )}`
   }
 
-  if (period === 'custom') {
-    const fromDate =
-      parseDate(customFrom)
-
-    const toDate =
-      parseDate(customTo)
-
-    if (fromDate && toDate) {
+  if (
+    period === 'custom'
+  ) {
+    if (
+      customFrom &&
+      customTo
+    ) {
       return `${formatDate(
-        fromDate
-      )} – ${formatDate(toDate)}`
-    }
-
-    if (fromDate) {
-      return `From ${formatDate(
-        fromDate
+        customFrom
+      )} – ${formatDate(
+        customTo
       )}`
     }
 
-    if (toDate) {
-      return `Up to ${formatDate(
-        toDate
-      )}`
+    if (customFrom) {
+      return translateUi(
+        'From {date}',
+        language,
+        {
+          date:
+            formatDate(
+              customFrom
+            ),
+        }
+      )
     }
 
-    return 'Select a date range'
+    if (customTo) {
+      return translateUi(
+        'Up to {date}',
+        language,
+        {
+          date:
+            formatDate(
+              customTo
+            ),
+        }
+      )
+    }
+
+    return translateUi(
+      'Select date range',
+      language
+    )
   }
 
   return ''

@@ -25,6 +25,14 @@ import {
   clearFarmDeviceCache,
 } from '../utils/deviceCache'
 
+import {
+  saveLanguage,
+} from '../utils/profileStorage'
+
+import {
+  useLanguage,
+} from '../i18n/LanguageContext'
+
 import FarmLocationSetup from './FarmLocationSetup'
 
 function Profile({
@@ -33,20 +41,41 @@ function Profile({
   onBack,
   onProfileChanged,
 }) {
+  const {
+    language,
+    setLanguage,
+    t,
+  } =
+    useLanguage()
+
   const [
     changingLocation,
     setChangingLocation,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     sendingReset,
     setSendingReset,
-  ] = useState(false)
+  ] =
+    useState(false)
 
-  if (changingLocation) {
+  const [
+    savingLanguage,
+    setSavingLanguage,
+  ] =
+    useState(false)
+
+  if (
+    changingLocation
+  ) {
     return (
       <FarmLocationSetup
-        title="Change farm location"
+        title={
+          t(
+            'Change farm location'
+          )
+        }
         onCancel={() =>
           setChangingLocation(
             false
@@ -67,9 +96,57 @@ function Profile({
     )
   }
 
+  const handleLanguageChange =
+    async (
+      nextLanguage
+    ) => {
+      if (
+        nextLanguage ===
+        language
+      ) {
+        return
+      }
+
+      try {
+        setSavingLanguage(
+          true
+        )
+
+        const updatedProfile =
+          await saveLanguage(
+            nextLanguage
+          )
+
+        setLanguage(
+          nextLanguage
+        )
+
+        onProfileChanged?.(
+          updatedProfile
+        )
+      } catch (error) {
+        console.error(
+          'Unable to change language:',
+          error
+        )
+
+        alert(
+          t(
+            'Unable to change language. Please try again.'
+          )
+        )
+      } finally {
+        setSavingLanguage(
+          false
+        )
+      }
+    }
+
   const handlePasswordReset =
     async () => {
-      if (!user?.email) {
+      if (
+        !user?.email
+      ) {
         return
       }
 
@@ -84,7 +161,9 @@ function Profile({
         )
 
         alert(
-          'Password reset email sent. Please check your email.'
+          t(
+            'Password reset email sent. Please check your email.'
+          )
         )
       } catch (error) {
         console.error(
@@ -93,7 +172,9 @@ function Profile({
         )
 
         alert(
-          'Unable to send the reset email. Please try again.'
+          t(
+            'Unable to send the reset email. Please try again.'
+          )
         )
       } finally {
         setSendingReset(
@@ -106,21 +187,18 @@ function Profile({
     async () => {
       const confirmed =
         window.confirm(
-          'Log out of Krishi Book on this phone?'
+          t(
+            'Log out of Krishi Book on this phone?'
+          )
         )
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return
       }
 
       try {
-        /*
-         * Remove temporary farm data
-         * from this browser.
-         *
-         * Cloud data remains safely
-         * stored in Firestore.
-         */
         clearFarmDeviceCache()
 
         await signOut(
@@ -133,7 +211,9 @@ function Profile({
         )
 
         alert(
-          'Unable to log out. Please try again.'
+          t(
+            'Unable to log out. Please try again.'
+          )
         )
       }
     }
@@ -153,46 +233,56 @@ function Profile({
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
             <ArrowLeft
-              size={20}
+              size={
+                20
+              }
             />
           </button>
 
           <div>
 
             <h1 className="text-2xl font-bold text-gray-900">
-              Profile
+              {t(
+                'Profile'
+              )}
             </h1>
 
             <p className="text-sm text-gray-500">
-              Your Krishi Book settings
+              {t(
+                'Your Krishi Book settings'
+              )}
             </p>
 
           </div>
 
         </header>
 
-        {/* Account */}
         <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
 
           <div className="flex items-center gap-3">
 
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E4EFD9]">
-
               <UserRound
-                size={24}
+                size={
+                  24
+                }
               />
-
             </div>
 
             <div className="min-w-0">
 
               <p className="truncate text-base font-semibold text-gray-900">
-                {profile?.name ||
-                  'Krishi Book User'}
+                {profile
+                  ?.name ||
+                  t(
+                    'Krishi Book User'
+                  )}
               </p>
 
               <p className="mt-1 truncate text-sm text-gray-500">
-                {user?.email}
+                {
+                  user?.email
+                }
               </p>
 
             </div>
@@ -201,27 +291,32 @@ function Profile({
 
         </section>
 
-        {/* Location */}
         <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
 
           <div className="flex items-start gap-3">
 
             <MapPin
-              size={21}
+              size={
+                21
+              }
               className="mt-0.5 shrink-0 text-gray-500"
             />
 
             <div className="min-w-0 flex-1">
 
               <p className="font-semibold text-gray-900">
-                Farm location
+                {t(
+                  'Farm location'
+                )}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
                 {profile
                   ?.farmLocation
                   ?.placeName ||
-                  'Not set'}
+                  t(
+                    'Not set'
+                  )}
               </p>
 
             </div>
@@ -237,77 +332,141 @@ function Profile({
             }
             className="mt-4 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700"
           >
-            Change Location
+            {t(
+              'Change Location'
+            )}
           </button>
 
         </section>
 
-        {/* Language */}
         <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
 
           <div className="mb-4 flex items-center gap-3">
 
             <Languages
-              size={21}
+              size={
+                21
+              }
               className="text-gray-500"
             />
 
             <p className="font-semibold text-gray-900">
-              Language
+              {t(
+                'Language'
+              )}
             </p>
 
           </div>
 
-          <div className="flex items-center justify-between rounded-xl bg-[#F7F5EF] px-4 py-3">
+          <button
+            type="button"
+            disabled={
+              savingLanguage
+            }
+            onClick={() =>
+              handleLanguageChange(
+                'en'
+              )
+            }
+            className={`flex w-full items-center justify-between rounded-xl px-4 py-3 ${
+              language ===
+              'en'
+                ? 'bg-[#F7F5EF]'
+                : 'bg-white'
+            }`}
+          >
 
             <span className="text-sm font-medium text-gray-800">
-              English
+              {t(
+                'English'
+              )}
             </span>
 
-            <div className="flex items-center gap-1 text-sm font-semibold text-[#4D7650]">
+            {language ===
+              'en' && (
+              <div className="flex items-center gap-1 text-sm font-semibold text-[#4D7650]">
 
-              <Check
-                size={17}
-              />
+                <Check
+                  size={
+                    17
+                  }
+                />
 
-              Current
+                {t(
+                  'Current'
+                )}
 
-            </div>
+              </div>
+            )}
 
-          </div>
+          </button>
 
-          <div className="mt-2 flex items-center justify-between rounded-xl px-4 py-3 opacity-50">
+          <button
+            type="button"
+            disabled={
+              savingLanguage
+            }
+            onClick={() =>
+              handleLanguageChange(
+                'kn'
+              )
+            }
+            className={`mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3 ${
+              language ===
+              'kn'
+                ? 'bg-[#F7F5EF]'
+                : 'bg-white'
+            }`}
+          >
 
             <span className="text-sm font-medium text-gray-800">
-              Kannada
+              ಕನ್ನಡ
             </span>
 
-            <span className="text-xs font-semibold text-gray-500">
-              Coming later
-            </span>
+            {language ===
+              'kn' && (
+              <div className="flex items-center gap-1 text-sm font-semibold text-[#4D7650]">
 
-          </div>
+                <Check
+                  size={
+                    17
+                  }
+                />
+
+                {t(
+                  'Current'
+                )}
+
+              </div>
+            )}
+
+          </button>
 
         </section>
 
-        {/* Password */}
         <section className="mb-4 rounded-2xl bg-white p-5 shadow-sm">
 
           <div className="flex items-center gap-3">
 
             <KeyRound
-              size={21}
+              size={
+                21
+              }
               className="text-gray-500"
             />
 
             <div className="flex-1">
 
               <p className="font-semibold text-gray-900">
-                Password
+                {t(
+                  'Password'
+                )}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                We will email you a secure link to change it.
+                {t(
+                  'We will email you a secure link to change it.'
+                )}
               </p>
 
             </div>
@@ -325,13 +484,16 @@ function Profile({
             className="mt-4 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 disabled:opacity-50"
           >
             {sendingReset
-              ? 'Sending...'
-              : 'Change Password'}
+              ? t(
+                  'Sending...'
+                )
+              : t(
+                  'Change Password'
+                )}
           </button>
 
         </section>
 
-        {/* Logout */}
         <button
           type="button"
           onClick={
@@ -341,15 +503,21 @@ function Profile({
         >
 
           <LogOut
-            size={20}
+            size={
+              20
+            }
           />
 
-          Log Out
+          {t(
+            'Log Out'
+          )}
 
         </button>
 
         <p className="mt-8 pb-4 text-center text-xs text-gray-400">
-          Krishi Book · Profile
+          {t(
+            'Krishi Book · Profile'
+          )}
         </p>
 
       </main>

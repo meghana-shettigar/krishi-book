@@ -46,6 +46,10 @@ import {
 } from './utils/calculations'
 
 import {
+  useLanguage,
+} from './i18n/LanguageContext'
+
+import {
   Plus,
   Wallet,
   BarChart3,
@@ -58,154 +62,194 @@ import {
 } from 'lucide-react'
 
 function App() {
-  const [period, setPeriod] =
-    useState('year')
+  const {
+    language,
+    setLanguage,
+    t,
+  } =
+    useLanguage()
 
-  const [customFrom, setCustomFrom] =
+  const [
+    period,
+    setPeriod,
+  ] =
+    useState(
+      'year'
+    )
+
+  const [
+    customFrom,
+    setCustomFrom,
+  ] =
     useState('')
 
-  const [customTo, setCustomTo] =
+  const [
+    customTo,
+    setCustomTo,
+  ] =
     useState('')
 
-  const [screen, setScreen] =
-    useState('home')
+  const [
+    screen,
+    setScreen,
+  ] =
+    useState(
+      'home'
+    )
 
   const [
     editingTransaction,
     setEditingTransaction,
-  ] = useState(null)
-
-  const [user, setUser] =
+  ] =
     useState(null)
 
-    const [
-  profile,
-  setProfile,
-] = useState(null)
+  const [
+    user,
+    setUser,
+  ] =
+    useState(null)
 
-const [
-  profileLoading,
-  setProfileLoading,
-] = useState(true)
+  const [
+    profile,
+    setProfile,
+  ] =
+    useState(null)
 
+  const [
+    profileLoading,
+    setProfileLoading,
+  ] =
+    useState(true)
 
-  const [authLoading, setAuthLoading] =
+  const [
+    authLoading,
+    setAuthLoading,
+  ] =
     useState(true)
 
   const [
     dataVersion,
     setDataVersion,
-  ] = useState(0)
+  ] =
+    useState(0)
 
   const [
     needsMigration,
     setNeedsMigration,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     migrationLoading,
     setMigrationLoading,
-  ] = useState(false)
+  ] =
+    useState(false)
 
-  /*
-   * Watch Firebase login state
-   */
-/*
- * Watch Firebase login state
- */
-useEffect(() => {
-  const unsubscribe =
-    onAuthStateChanged(
-      auth,
-      (firebaseUser) => {
-        /*
-         * If another account uses
-         * this device, remove the
-         * previous account's
-         * temporary browser cache.
-         */
-        if (firebaseUser) {
-          prepareDeviceForUser(
-            firebaseUser.uid
-          )
-        }
-
-        setUser(
+  useEffect(() => {
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        (
           firebaseUser
-        )
+        ) => {
+          if (
+            firebaseUser
+          ) {
+            prepareDeviceForUser(
+              firebaseUser.uid
+            )
+          }
 
-        if (!firebaseUser) {
-          setProfile(null)
-          setProfileLoading(
+          setUser(
+            firebaseUser
+          )
+
+          if (
+            !firebaseUser
+          ) {
+            setProfile(
+              null
+            )
+
+            setProfileLoading(
+              false
+            )
+          }
+
+          setAuthLoading(
             false
           )
         }
+      )
 
-        setAuthLoading(
-          false
-        )
-      }
-    )
+    return unsubscribe
+  }, [])
 
-  return unsubscribe
-}, [])
-
-/*
- * Load/create the user's profile.
- *
- * Existing parents' accounts will
- * automatically get a profile
- * document without changing their
- * old transactions or contacts.
- */
-useEffect(() => {
-  if (!user) {
-    return
-  }
-
-  let cancelled = false
-
-  const loadProfile =
-    async () => {
-      try {
-        setProfileLoading(
-          true
-        )
-
-        const userProfile =
-          await ensureUserProfile(
-            user
-          )
-
-        if (!cancelled) {
-          setProfile(
-            userProfile
-          )
-        }
-      } catch (error) {
-        console.error(
-          'Unable to load user profile:',
-          error
-        )
-      } finally {
-        if (!cancelled) {
-          setProfileLoading(
-            false
-          )
-        }
-      }
+  useEffect(() => {
+    if (!user) {
+      return
     }
 
-  loadProfile()
+    let cancelled =
+      false
 
-  return () => {
-    cancelled = true
-  }
-}, [user])
+    const loadProfile =
+      async () => {
+        try {
+          setProfileLoading(
+            true
+          )
 
-  /*
-   * Start cloud sync after login
-   */
+          const userProfile =
+            await ensureUserProfile(
+              user
+            )
+
+          if (
+            !cancelled
+          ) {
+            /*
+             * Account preference
+             * wins over the local
+             * device preference.
+             */
+            setLanguage(
+              userProfile
+                ?.language ||
+              'en'
+            )
+
+            setProfile(
+              userProfile
+            )
+          }
+        } catch (error) {
+          console.error(
+            'Unable to load user profile:',
+            error
+          )
+        } finally {
+          if (
+            !cancelled
+          ) {
+            setProfileLoading(
+              false
+            )
+          }
+        }
+      }
+
+    loadProfile()
+
+    return () => {
+      cancelled =
+        true
+    }
+  }, [
+    user,
+    setLanguage,
+  ])
+
   useEffect(() => {
     if (!user) {
       return
@@ -230,8 +274,11 @@ useEffect(() => {
             await loadCloudTransactions()
 
             setDataVersion(
-              (version) =>
-                version + 1
+              (
+                version
+              ) =>
+                version +
+                1
             )
           }
 
@@ -239,8 +286,11 @@ useEffect(() => {
             subscribeToCloudTransactions(
               () => {
                 setDataVersion(
-                  (version) =>
-                    version + 1
+                  (
+                    version
+                  ) =>
+                    version +
+                    1
                 )
               }
             )
@@ -257,20 +307,22 @@ useEffect(() => {
     return () => {
       unsubscribeCloud()
     }
-  }, [user])
+  }, [
+    user,
+  ])
 
-  /*
-   * Move old Local Storage records
-   * to Firebase once
-   */
   const handleMigration =
     async () => {
       const confirmed =
         window.confirm(
-          'Move the existing records on this device to Krishi Book Cloud?\n\nNothing will be deleted from this device.'
+          t(
+            'Move the existing records on this device to Krishi Book Cloud?\n\nNothing will be deleted from this device.'
+          )
         )
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return
       }
 
@@ -282,21 +334,27 @@ useEffect(() => {
         const count =
           await migrateLocalToCloud()
 
-        setNeedsMigration(false)
+        setNeedsMigration(
+          false
+        )
 
         await loadCloudTransactions()
 
         setDataVersion(
-          (version) =>
-            version + 1
+          (
+            version
+          ) =>
+            version +
+            1
         )
 
         alert(
-          `${count} transaction${
-            count === 1
-              ? ''
-              : 's'
-          } moved to Krishi Book Cloud successfully.`
+          t(
+            '{count} records moved to Krishi Book Cloud successfully.',
+            {
+              count,
+            }
+          )
         )
       } catch (error) {
         console.error(
@@ -305,7 +363,9 @@ useEffect(() => {
         )
 
         alert(
-          'Unable to move your records to the cloud. Please try again.'
+          t(
+            'Unable to move your records to the cloud. Please try again.'
+          )
         )
       } finally {
         setMigrationLoading(
@@ -314,41 +374,48 @@ useEffect(() => {
       }
     }
 
-  /*
-   * Custom date handlers
-   *
-   * Mobile browsers do not always
-   * respect min/max correctly, so
-   * we validate in React as well.
-   */
   const handleCustomFromChange =
-    (value) => {
-      setCustomFrom(value)
+    (
+      value
+    ) => {
+      setCustomFrom(
+        value
+      )
 
       if (
         customTo &&
         value &&
-        customTo < value
+        customTo <
+          value
       ) {
-        setCustomTo('')
+        setCustomTo(
+          ''
+        )
       }
     }
 
   const handleCustomToChange =
-    (value) => {
+    (
+      value
+    ) => {
       if (
         customFrom &&
         value &&
-        value < customFrom
+        value <
+          customFrom
       ) {
         alert(
-          'To date cannot be earlier than From date.'
+          t(
+            'To date cannot be earlier than From date.'
+          )
         )
 
         return
       }
 
-      setCustomTo(value)
+      setCustomTo(
+        value
+      )
     }
 
   const handleResetCustomDates =
@@ -357,20 +424,21 @@ useEffect(() => {
       setCustomTo('')
     }
 
-  /*
-   * Force React refresh after
-   * realtime Firebase updates
-   */
   void dataVersion
 
   const transactions =
     getTransactions()
 
   const filteredTransactions =
-    period === 'custom'
+    period ===
+    'custom'
       ? transactions.filter(
-          (transaction) => {
-            if (!transaction.date) {
+          (
+            transaction
+          ) => {
+            if (
+              !transaction.date
+            ) {
               return false
             }
 
@@ -404,94 +472,113 @@ useEffect(() => {
     )
 
   const periodLabels = {
-    day: 'Today',
-    month: 'This Month',
-    year: 'This Year',
-    custom: 'Custom',
+    day:
+      t('Today'),
+
+    month:
+      t(
+        'This Month'
+      ),
+
+    year:
+      t(
+        'This Year'
+      ),
+
+    custom:
+      t('Custom'),
   }
 
-  
-  /*
-   * Loading screen
-   */
-if (
-  authLoading ||
-  (
-    user &&
-    profileLoading
-  )
-) {
+  if (
+    authLoading ||
+    (
+      user &&
+      profileLoading
+    )
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F7F5EF]">
+
         <p className="text-sm text-gray-500">
-          Opening Krishi Book...
+          {t(
+            'Opening Krishi Book...'
+          )}
         </p>
+
       </div>
     )
   }
 
-  /*
-   * Login
-   */
   if (!user) {
-    return <Login />
+    return (
+      <Login />
+    )
   }
-/*
- * First-time farm setup.
- *
- * This will also appear once for
- * the existing parents account
- * because it was created before
- * farm profiles existed.
- */
-if (
-  !profile
-    ?.farmLocation
-    ?.confirmed
-) {
-  return (
-    <FarmLocationSetup
-      showAccountSwitch
-      onSaved={(
-        updatedProfile
-      ) =>
-        setProfile(
+
+  if (
+    !profile
+      ?.farmLocation
+      ?.confirmed
+  ) {
+    return (
+      <FarmLocationSetup
+        showAccountSwitch
+        onSaved={(
           updatedProfile
-        )
-      }
-    />
-  )
-}
-  /*
-   * Expense screen
-   */
-  if (screen === 'expense') {
+        ) =>
+          setProfile(
+            updatedProfile
+          )
+        }
+      />
+    )
+  }
+
+  if (
+    screen ===
+    'expense'
+  ) {
     return (
       <Expense
         existingTransaction={
           editingTransaction
         }
         onBack={() => {
-          setEditingTransaction(null)
-          setScreen('home')
+          setEditingTransaction(
+            null
+          )
+
+          setScreen(
+            'home'
+          )
         }}
       />
     )
   }
 
-  /*
-   * Details screen
-   */
-  if (screen === 'details') {
+  if (
+    screen ===
+    'details'
+  ) {
     return (
       <Details
-        period={period}
-        customFrom={customFrom}
-        customTo={customTo}
-        onBack={() =>
-          setScreen('home')
+        period={
+          period
         }
-        onEdit={(transaction) => {
+        customFrom={
+          customFrom
+        }
+        customTo={
+          customTo
+        }
+        onBack={() =>
+          setScreen(
+            'home'
+          )
+        }
+        onEdit={(
+          transaction
+        ) => {
           setEditingTransaction(
             transaction
           )
@@ -500,161 +587,212 @@ if (
             transaction.type ===
             'income'
           ) {
-            setScreen('income')
+            setScreen(
+              'income'
+            )
           } else {
-            setScreen('expense')
+            setScreen(
+              'expense'
+            )
           }
         }}
       />
     )
   }
 
-  /*
-   * Income screen
-   */
-  if (screen === 'income') {
+  if (
+    screen ===
+    'income'
+  ) {
     return (
       <Income
         existingTransaction={
           editingTransaction
         }
         onBack={() => {
-          setEditingTransaction(null)
-          setScreen('home')
+          setEditingTransaction(
+            null
+          )
+
+          setScreen(
+            'home'
+          )
         }}
       />
     )
   }
-  if (screen === 'trends') {
-  return (
-    <Trends
-      period={period}
-      setPeriod={setPeriod}
-      customFrom={customFrom}
-      setCustomFrom={setCustomFrom}
-      customTo={customTo}
-      setCustomTo={setCustomTo}
-      onBack={() =>
-        setScreen('home')
-      }
-    />
-  )
-}
-if (screen === 'contacts') {
-  return (
-    <Contacts
-      onBack={() =>
-        setScreen('home')
-      }
-    />
-  )
-}
-if (
-  screen === 'profile'
-) {
-  return (
-    <Profile
-      user={user}
-      profile={
-        profile
-      }
-      onBack={() =>
-        setScreen(
-          'home'
-        )
-      }
-      onProfileChanged={(
-        updatedProfile
-      ) =>
-        setProfile(
-          updatedProfile
-        )
-      }
-    />
-  )
-}
 
-if (screen === 'weather') {
-  return (
-    <FarmWeather
-      farmLocation={
-        profile.farmLocation
-      }
-      onBack={() =>
-        setScreen(
-          'home'
-        )
-      }
-    />
-  )
-}
+  if (
+    screen ===
+    'trends'
+  ) {
+    return (
+      <Trends
+        period={
+          period
+        }
+        setPeriod={
+          setPeriod
+        }
+        customFrom={
+          customFrom
+        }
+        setCustomFrom={
+          setCustomFrom
+        }
+        customTo={
+          customTo
+        }
+        setCustomTo={
+          setCustomTo
+        }
+        onBack={() =>
+          setScreen(
+            'home'
+          )
+        }
+      />
+    )
+  }
+
+  if (
+    screen ===
+    'contacts'
+  ) {
+    return (
+      <Contacts
+        onBack={() =>
+          setScreen(
+            'home'
+          )
+        }
+      />
+    )
+  }
+
+  if (
+    screen ===
+    'profile'
+  ) {
+    return (
+      <Profile
+        user={
+          user
+        }
+        profile={
+          profile
+        }
+        onBack={() =>
+          setScreen(
+            'home'
+          )
+        }
+        onProfileChanged={(
+          updatedProfile
+        ) =>
+          setProfile(
+            updatedProfile
+          )
+        }
+      />
+    )
+  }
+
+  if (
+    screen ===
+    'weather'
+  ) {
+    return (
+      <FarmWeather
+        farmLocation={
+          profile
+            .farmLocation
+        }
+        onBack={() =>
+          setScreen(
+            'home'
+          )
+        }
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
+
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-        {/* Header */}
-<header className="mb-5">
+        <header className="mb-5">
 
-  <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
 
-    <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
 
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E4EFD9]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E4EFD9]">
 
-        <Sprout
-          size={24}
+                <Sprout
+                  size={
+                    24
+                  }
+                />
+
+              </div>
+
+              <div className="min-w-0">
+
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {t(
+                    'Krishi Book'
+                  )}
+                </h1>
+
+                <p className="text-sm text-gray-500">
+                  {t(
+                    'Your farm ledger'
+                  )}
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setScreen(
+                  'profile'
+                )
+              }
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm"
+              aria-label={
+                t(
+                  'Profile'
+                )
+              }
+            >
+              <User
+                size={
+                  22
+                }
+              />
+            </button>
+
+          </div>
+
+        </header>
+
+        <WeatherBar
+          farmLocation={
+            profile
+              .farmLocation
+          }
+          onOpen={() =>
+            setScreen(
+              'weather'
+            )
+          }
         />
 
-      </div>
-
-      <div className="min-w-0">
-
-        <h1 className="text-2xl font-bold text-gray-900">
-          Krishi Book
-        </h1>
-
-        <p className="text-sm text-gray-500">
-          Your farm ledger
-        </p>
-
-      </div>
-
-    </div>
-
-    {/* Profile */}
-    <button
-      type="button"
-      onClick={() =>
-        setScreen(
-          'profile'
-        )
-      }
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm"
-      aria-label="Profile"
-    >
-
-      <User
-        size={22}
-      />
-
-    </button>
-
-  </div>
-
-</header>
-{/* Farm Weather */}
-<WeatherBar
-  farmLocation={
-    profile.farmLocation
-  }
-  onOpen={() =>
-    setScreen(
-      'weather'
-    )
-  }
-/>
-        {/* Migration */}
         {needsMigration && (
           <section className="mb-6 rounded-2xl border border-[#D6E6C7] bg-[#EDF5E7] p-5">
 
@@ -662,27 +800,28 @@ if (screen === 'weather') {
 
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white">
                 <CloudUpload
-                  size={21}
+                  size={
+                    21
+                  }
                 />
               </div>
 
               <div className="flex-1">
 
                 <p className="font-semibold text-gray-900">
-                  Move existing records to cloud
+                  {t(
+                    'Move existing records to cloud'
+                  )}
                 </p>
 
                 <p className="mt-1 text-sm leading-5 text-gray-600">
-                  Your existing farm
-                  records are still
-                  stored on this device.
-                  Move them to Krishi
-                  Book Cloud so they can
-                  appear on your other
-                  phones too.
+                  {t(
+                    'Your existing farm records are still stored on this device. Move them to Krishi Book Cloud so they can appear on your other phones too.'
+                  )}
                 </p>
 
                 <button
+                  type="button"
                   onClick={
                     handleMigration
                   }
@@ -692,8 +831,12 @@ if (screen === 'weather') {
                   className="mt-4 w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   {migrationLoading
-                    ? 'Moving records...'
-                    : 'Move My Records'}
+                    ? t(
+                        'Moving records...'
+                      )
+                    : t(
+                        'Move My Records'
+                      )}
                 </button>
 
               </div>
@@ -703,69 +846,90 @@ if (screen === 'weather') {
           </section>
         )}
 
-        {/* Period Selector */}
         <section className="mb-4">
 
           <label
             htmlFor="period"
             className="mb-2 block text-sm font-medium text-gray-600"
           >
-            View
+            {t(
+              'View'
+            )}
           </label>
 
           <div className="relative">
 
             <select
               id="period"
-              value={period}
-              onChange={(event) =>
+              value={
+                period
+              }
+              onChange={(
+                event
+              ) =>
                 setPeriod(
-                  event.target.value
+                  event
+                    .target
+                    .value
                 )
               }
               className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-4 pr-10 text-base font-medium text-gray-900 outline-none"
             >
               <option value="day">
-                Today
+                {t(
+                  'Today'
+                )}
               </option>
 
               <option value="month">
-                This Month
+                {t(
+                  'This Month'
+                )}
               </option>
 
               <option value="year">
-                This Year
+                {t(
+                  'This Year'
+                )}
               </option>
 
               <option value="custom">
-                Custom
+                {t(
+                  'Custom'
+                )}
               </option>
             </select>
 
             <ChevronDown
-              size={20}
+              size={
+                20
+              }
               className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
             />
 
           </div>
-<p className="mt-2 px-1 text-sm text-gray-500">
-  {getPeriodDateLabel(
-    period,
-    customFrom,
-    customTo
-  )}
-</p>
 
-</section>
+          <p className="mt-2 px-1 text-sm text-gray-500">
+            {getPeriodDateLabel(
+              period,
+              customFrom,
+              customTo,
+              language
+            )}
+          </p>
 
-        {/* Custom Date Range */}
-        {period === 'custom' && (
+        </section>
+
+        {period ===
+          'custom' && (
           <section className="mb-4 w-full min-w-0 overflow-hidden rounded-2xl bg-white p-5 shadow-sm">
 
             <div className="mb-4 flex items-center justify-between gap-3">
 
               <p className="text-sm font-medium text-gray-600">
-                Select date range
+                {t(
+                  'Select date range'
+                )}
               </p>
 
               <button
@@ -775,34 +939,44 @@ if (screen === 'weather') {
                 }
                 className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-gray-500"
               >
-                Reset
+                {t(
+                  'Reset'
+                )}
               </button>
 
             </div>
 
             <div className="min-w-0 space-y-4">
 
-              {/* From */}
               <div className="min-w-0">
 
                 <label
                   htmlFor="customFrom"
                   className="mb-2 block text-sm font-medium text-gray-600"
                 >
-                  From
+                  {t(
+                    'From'
+                  )}
                 </label>
 
                 <input
                   id="customFrom"
+                  lang="en-IN"
                   type="date"
-                  value={customFrom}
+                  value={
+                    customFrom
+                  }
                   max={
                     customTo ||
                     undefined
                   }
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     handleCustomFromChange(
-                      event.target.value
+                      event
+                        .target
+                        .value
                     )
                   }
                   className="block w-full min-w-0 max-w-full rounded-xl border border-gray-200 bg-white px-3 py-4 text-base outline-none"
@@ -810,27 +984,35 @@ if (screen === 'weather') {
 
               </div>
 
-              {/* To */}
               <div className="min-w-0">
 
                 <label
                   htmlFor="customTo"
                   className="mb-2 block text-sm font-medium text-gray-600"
                 >
-                  To
+                  {t(
+                    'To'
+                  )}
                 </label>
 
                 <input
                   id="customTo"
+                  lang="en-IN"
                   type="date"
-                  value={customTo}
+                  value={
+                    customTo
+                  }
                   min={
                     customFrom ||
                     undefined
                   }
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     handleCustomToChange(
-                      event.target.value
+                      event
+                        .target
+                        .value
                     )
                   }
                   className="block w-full min-w-0 max-w-full rounded-xl border border-gray-200 bg-white px-3 py-4 text-base outline-none"
@@ -843,172 +1025,246 @@ if (screen === 'weather') {
           </section>
         )}
 
-        {/* Profit / Loss */}
         <section className="mb-3 rounded-2xl bg-white p-6 shadow-sm">
 
-          <p className="text-center text-sm font-medium uppercase tracking-wide text-gray-500">
+          <p className="text-center text-sm font-medium tracking-wide text-gray-500">
+
             {
               periodLabels[
                 period
               ]
             }{' '}
-            Profit / Loss
+
+            {t(
+              'Profit / Loss'
+            )}
+
           </p>
 
           <p
             className={`mt-3 text-center text-4xl font-bold ${
-              totals.profitLoss < 0
+              totals
+                .profitLoss <
+              0
                 ? 'text-red-600'
                 : 'text-gray-900'
             }`}
           >
             {formatCurrency(
-              totals.profitLoss
+              totals
+                .profitLoss
             )}
           </p>
 
           <p className="mt-2 text-center text-sm text-gray-500">
-            Income:{' '}
+
+            {t(
+              'Income'
+            )}
+            :{' '}
+
             {formatCurrency(
               totals.income
             )}
+
             {' · '}
-            Expenses:{' '}
+
+            {t(
+              'Expenses'
+            )}
+            :{' '}
+
             {formatCurrency(
               totals.expenses
             )}
+
           </p>
 
         </section>
 
-        {/* View Details */}
         <button
+          type="button"
           onClick={() =>
-            setScreen('details')
+            setScreen(
+              'details'
+            )
           }
           className="mb-6 flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold text-gray-700"
         >
-          View Details
+          {t(
+            'View Details'
+          )}
 
-          <ArrowRight size={17} />
+          <ArrowRight
+            size={
+              17
+            }
+          />
         </button>
 
-        {/* Main Actions */}
         <div className="space-y-3">
 
-          {/* Expense */}
           <button
+            type="button"
             onClick={() =>
-              setScreen('expense')
+              setScreen(
+                'expense'
+              )
             }
             className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
           >
 
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FCE8E4]">
-              <Plus size={25} />
+              <Plus
+                size={
+                  25
+                }
+              />
             </div>
 
             <div>
+
               <p className="text-base font-semibold text-gray-900">
-                Record Expense
+                {t(
+                  'Record Expense'
+                )}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                Add money spent on
-                the farm
+                {t(
+                  'Add money spent on the farm'
+                )}
               </p>
+
             </div>
 
           </button>
 
-          {/* Income */}
           <button
+            type="button"
             onClick={() =>
-              setScreen('income')
+              setScreen(
+                'income'
+              )
             }
             className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
           >
 
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E4F1E7]">
-              <Wallet size={25} />
+              <Wallet
+                size={
+                  25
+                }
+              />
             </div>
 
             <div>
+
               <p className="text-base font-semibold text-gray-900">
-                Record Income
+                {t(
+                  'Record Income'
+                )}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                Add money made from
-                the farm
+                {t(
+                  'Add money made from the farm'
+                )}
               </p>
+
             </div>
 
           </button>
-{/* Farm Contacts */}
-<button
-  type="button"
-  onClick={() =>
-    setScreen('contacts')
-  }
-  className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
->
 
-  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E8F0F7]">
-    <Users size={25} />
-  </div>
-
-  <div>
-
-    <p className="text-base font-semibold text-gray-900">
-      Farm Contacts
-    </p>
-
-    <p className="mt-1 text-sm text-gray-500">
-      Labour, buyers and farm services
-    </p>
-
-  </div>
-
-</button>
-          {/* Trends */}
           <button
+            type="button"
             onClick={() =>
-               setScreen('trends')
+              setScreen(
+                'contacts'
+              )
+            }
+            className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
+          >
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E8F0F7]">
+              <Users
+                size={
+                  25
+                }
+              />
+            </div>
+
+            <div>
+
+              <p className="text-base font-semibold text-gray-900">
+                {t(
+                  'Farm Contacts'
+                )}
+              </p>
+
+              <p className="mt-1 text-sm text-gray-500">
+                {t(
+                  'Labour, buyers and farm services'
+                )}
+              </p>
+
+            </div>
+
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              setScreen(
+                'trends'
+              )
             }
             className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
           >
 
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E8E8F5]">
-              <BarChart3 size={25} />
+              <BarChart3
+                size={
+                  25
+                }
+              />
             </div>
 
             <div>
+
               <p className="text-base font-semibold text-gray-900">
-                Trends
+                {t(
+                  'Trends'
+                )}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                See how your farm is
-                doing
+                {t(
+                  'See how your farm is doing'
+                )}
               </p>
+
             </div>
 
           </button>
 
         </div>
 
-        {/* Cloud status */}
         <p className="mt-8 text-center text-xs text-gray-400">
-          ☁ Synced with Krishi Book Cloud
+          ☁{' '}
+          {t(
+            'Synced with Krishi Book Cloud'
+          )}
         </p>
 
-        {/* Footer */}
         <p className="mt-3 pb-4 text-center text-xs text-gray-400">
-          Krishi Book · Farm Ledger
+          {t(
+            'Krishi Book · Farm Ledger'
+          )}
         </p>
 
       </main>
+
     </div>
   )
 }

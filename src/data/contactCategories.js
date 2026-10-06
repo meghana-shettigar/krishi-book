@@ -6,13 +6,6 @@ export const CONTACT_CATEGORIES = [
     description:
       'Workers, cleaning, planting and other farm work',
 
-    /*
-     * Automatic public-directory
-     * service radius.
-     *
-     * The farmer never needs to
-     * choose or understand this.
-     */
     publicRadiusKm: 15,
 
     ledgerDefaults: {
@@ -55,13 +48,16 @@ export const CONTACT_CATEGORIES = [
 
   {
     id: 'pepper-buyer',
-    label: 'Pepper Buyer',
+    label: 'Black Pepper Buyer',
     icon: '🌿',
     description:
-      'Person who buys pepper',
+      'Person who buys black pepper',
 
     publicRadiusKm: 25,
 
+    /*
+     * Internal value remains Pepper.
+     */
     ledgerDefaults: {
       type: 'income',
       incomeType: 'Sold',
@@ -85,11 +81,6 @@ export const CONTACT_CATEGORIES = [
     },
   },
 
-  /*
-   * Keep the old ID "crop-supplies"
-   * so existing contacts continue
-   * to work.
-   */
   {
     id: 'crop-supplies',
     label:
@@ -100,9 +91,13 @@ export const CONTACT_CATEGORIES = [
 
     publicRadiusKm: 15,
 
+    /*
+     * This contact category covers
+     * multiple final expense categories,
+     * so don't guess which one.
+     */
     ledgerDefaults: {
       type: 'expense',
-      category: 'Crop',
     },
   },
 
@@ -117,8 +112,8 @@ export const CONTACT_CATEGORIES = [
 
     ledgerDefaults: {
       type: 'expense',
-      category: 'Crop',
-      expenseType:
+
+      category:
         'New Plants / Seeds',
     },
   },
@@ -138,9 +133,6 @@ export const CONTACT_CATEGORIES = [
 
       category:
         'Water / Pipe / Sprinkler / Borewell',
-
-      expenseType:
-        'Water / Pipe / Sprinkler / Borewell',
     },
   },
 
@@ -157,9 +149,6 @@ export const CONTACT_CATEGORIES = [
       type: 'expense',
 
       category:
-        'Water / Pipe / Sprinkler / Borewell',
-
-      expenseType:
         'Water / Pipe / Sprinkler / Borewell',
     },
   },
@@ -179,9 +168,6 @@ export const CONTACT_CATEGORIES = [
 
       category:
         'Machine / Transport / Tools',
-
-      expenseType:
-        'Machine / Transport / Tools',
     },
   },
 
@@ -200,9 +186,6 @@ export const CONTACT_CATEGORIES = [
 
       category:
         'Land / Boundary / Levelling',
-
-      expenseType:
-        'Land / Boundary / Levelling',
     },
   },
 
@@ -214,12 +197,6 @@ export const CONTACT_CATEGORIES = [
     description:
       'Agriculture, horticulture or government benefit contact',
 
-    /*
-     * For government offices this
-     * represents a discovery area,
-     * rather than how far an officer
-     * personally travels.
-     */
     publicRadiusKm: 30,
 
     ledgerDefaults: {
@@ -253,7 +230,8 @@ export function getContactCategory(
   return (
     CONTACT_CATEGORIES.find(
       (category) =>
-        category.id === roleId
+        category.id ===
+        roleId
     ) ||
     CONTACT_CATEGORIES[
       CONTACT_CATEGORIES.length -

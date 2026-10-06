@@ -21,8 +21,6 @@ import WeatherIcon from './WeatherIcon'
 
 import {
   buildFarmAdvice,
-  formatForecastDate,
-  formatWeatherUpdatedTime,
   getDailyForecast,
   getFarmWeather,
   getRainWindows,
@@ -32,12 +30,20 @@ import {
   getWeatherDescriptor,
 } from '../utils/weather'
 
+import {
+  useLanguage,
+} from '../i18n/LanguageContext'
+
 function AdviceSection({
   title,
   items,
   tone,
+  t,
+  generatedText,
 }) {
-  if (!items?.length) {
+  if (
+    !items?.length
+  ) {
     return null
   }
 
@@ -77,7 +83,9 @@ function AdviceSection({
   }
 
   const style =
-    styles[tone]
+    styles[
+      tone
+    ]
 
   const Icon =
     style.Icon
@@ -90,14 +98,18 @@ function AdviceSection({
       <div className="mb-4 flex items-center gap-2">
 
         <Icon
-          size={20}
+          size={
+            20
+          }
           className={
             style.icon
           }
         />
 
         <h3 className="text-base font-semibold text-gray-900">
-          {title}
+          {t(
+            title
+          )}
         </h3>
 
       </div>
@@ -105,7 +117,9 @@ function AdviceSection({
       <div className="space-y-4">
 
         {items.map(
-          (item) => (
+          (
+            item
+          ) => (
             <div
               key={
                 item.title
@@ -113,11 +127,15 @@ function AdviceSection({
             >
 
               <p className="text-sm font-semibold text-gray-900">
-                {item.title}
+                {generatedText(
+                  item.title
+                )}
               </p>
 
               <p className="mt-1 text-sm leading-5 text-gray-600">
-                {item.detail}
+                {generatedText(
+                  item.detail
+                )}
               </p>
 
             </div>
@@ -134,46 +152,66 @@ function FarmWeather({
   onBack,
   farmLocation,
 }) {
+  const {
+    t,
+    generatedText,
+    localizeTime,
+    formatTime,
+    formatForecastDate,
+  } =
+    useLanguage()
+
   const [
     weather,
     setWeather,
-  ] = useState(null)
+  ] =
+    useState(null)
 
   const [
     loading,
     setLoading,
-  ] = useState(true)
+  ] =
+    useState(true)
 
   const [
     refreshing,
     setRefreshing,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     error,
     setError,
-  ] = useState('')
+  ] =
+    useState('')
 
   const loadWeather =
     async (
-      force = false
+      force =
+        false
     ) => {
       try {
-        if (force) {
-          setRefreshing(true)
+        if (
+          force
+        ) {
+          setRefreshing(
+            true
+          )
         } else {
-          setLoading(true)
+          setLoading(
+            true
+          )
         }
 
         setError('')
 
-     const result =
-  await getFarmWeather({
-    force,
+        const result =
+          await getFarmWeather({
+            force,
 
-    location:
-      farmLocation,
-  })
+            location:
+              farmLocation,
+          })
 
         setWeather(
           result
@@ -188,21 +226,23 @@ function FarmWeather({
           'Unable to get the farm weather right now.'
         )
       } finally {
-        setLoading(false)
-        setRefreshing(false)
+        setLoading(
+          false
+        )
+
+        setRefreshing(
+          false
+        )
       }
     }
 
-useEffect(() => {
-  loadWeather()
-}, [
-  farmLocation?.latitude,
-  farmLocation?.longitude,
-])
+  useEffect(() => {
+    loadWeather()
+  }, [
+    farmLocation?.latitude,
+    farmLocation?.longitude,
+  ])
 
-  /*
-   * Loading
-   */
   if (
     loading &&
     !weather
@@ -216,22 +256,30 @@ useEffect(() => {
 
             <button
               type="button"
-              onClick={onBack}
+              onClick={
+                onBack
+              }
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             >
               <ArrowLeft
-                size={20}
+                size={
+                  20
+                }
               />
             </button>
 
             <div>
 
-              <h1 className="text-2xl font-bold text-gray-900">
-                Farm Weather
+              <h1 className="text-2xl font-bold">
+                {t(
+                  'Farm Weather'
+                )}
               </h1>
 
               <p className="text-sm text-gray-500">
-                Checking today's conditions...
+                {t(
+                  "Checking today's conditions..."
+                )}
               </p>
 
             </div>
@@ -241,12 +289,16 @@ useEffect(() => {
           <section className="rounded-2xl bg-white p-8 text-center shadow-sm">
 
             <RefreshCw
-              size={28}
-              className="mx-auto animate-spin text-gray-400"
+              size={
+                28
+              }
+              className="mx-auto animate-spin"
             />
 
             <p className="mt-4 text-sm text-gray-500">
-              Getting farm weather...
+              {t(
+                'Getting farm weather...'
+              )}
             </p>
 
           </section>
@@ -257,9 +309,6 @@ useEffect(() => {
     )
   }
 
-  /*
-   * Nothing available
-   */
   if (
     !weather
   ) {
@@ -272,22 +321,30 @@ useEffect(() => {
 
             <button
               type="button"
-              onClick={onBack}
+              onClick={
+                onBack
+              }
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             >
               <ArrowLeft
-                size={20}
+                size={
+                  20
+                }
               />
             </button>
 
             <div>
 
-              <h1 className="text-2xl font-bold text-gray-900">
-                Farm Weather
+              <h1 className="text-2xl font-bold">
+                {t(
+                  'Farm Weather'
+                )}
               </h1>
 
               <p className="text-sm text-gray-500">
-                Should we do farm work today?
+                {t(
+                  'Should we do farm work today?'
+                )}
               </p>
 
             </div>
@@ -297,16 +354,22 @@ useEffect(() => {
           <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
 
             <CloudRain
-              size={32}
+              size={
+                32
+              }
               className="mx-auto text-gray-400"
             />
 
-            <p className="mt-4 font-semibold text-gray-900">
-              Weather unavailable
+            <p className="mt-4 font-semibold">
+              {t(
+                'Weather unavailable'
+              )}
             </p>
 
-            <p className="mt-2 text-sm leading-5 text-gray-500">
-              {error}
+            <p className="mt-2 text-sm text-gray-500">
+              {t(
+                error
+              )}
             </p>
 
             <button
@@ -316,9 +379,11 @@ useEffect(() => {
                   true
                 )
               }
-              className="mt-5 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white"
+              className="mt-5 rounded-xl bg-gray-900 px-5 py-3 text-white"
             >
-              Try Again
+              {t(
+                'Try Again'
+              )}
             </button>
 
           </section>
@@ -334,20 +399,20 @@ useEffect(() => {
       weather
     )
 
-const metrics =
-  getTodayMetrics(
-    weather
-  )
+  const metrics =
+    getTodayMetrics(
+      weather
+    )
 
-const remainingRain =
-  getRemainingRainMetrics(
-    weather
-  )
+  const remainingRain =
+    getRemainingRainMetrics(
+      weather
+    )
 
-const rainWindows =
-  getRainWindows(
-    weather
-  )
+  const rainWindows =
+    getRainWindows(
+      weather
+    )
 
   const advice =
     buildFarmAdvice(
@@ -359,37 +424,43 @@ const rainWindows =
       weather
     )
 
-const current =
-  weather.current || {}
+  const current =
+    weather.current ||
+    {}
 
-const currentDescriptor =
-  getWeatherDescriptor(
-    Number(
-      current.weather_code ||
+  const currentDescriptor =
+    getWeatherDescriptor(
+      Number(
+        current
+          .weather_code ||
         0
-    ),
-
-    Number(
-      current.is_day ?? 1
+      ),
+      Number(
+        current
+          .is_day ??
+        1
+      )
     )
-  )
 
-const isRainingNow =
-  currentDescriptor.kind ===
-    'rain' ||
-  currentDescriptor.kind ===
-    'drizzle' ||
-  currentDescriptor.kind ===
-    'storm'
+  const isRainingNow =
+    currentDescriptor
+      .kind ===
+      'rain' ||
+    currentDescriptor
+      .kind ===
+      'drizzle' ||
+    currentDescriptor
+      .kind ===
+      'storm'
 
-const feelsLike =
-  Math.round(
-    Number(
-      current
-        .apparent_temperature ||
+  const feelsLike =
+    Math.round(
+      Number(
+        current
+          .apparent_temperature ||
         0
+      )
     )
-  )
 
   const statusClasses = {
     good:
@@ -407,33 +478,45 @@ const feelsLike =
 
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-        {/* Header */}
         <header className="mb-6 flex items-center gap-3">
 
           <button
             type="button"
-            onClick={onBack}
+            onClick={
+              onBack
+            }
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
             <ArrowLeft
-              size={20}
+              size={
+                20
+              }
             />
           </button>
 
           <div className="min-w-0 flex-1">
 
-            <h1 className="text-2xl font-bold text-gray-900">
-              Farm Weather
+            <h1 className="text-2xl font-bold">
+              {t(
+                'Farm Weather'
+              )}
             </h1>
 
             <p className="text-sm text-gray-500">
-              Should we do farm work today?
+              {t(
+                'Should we do farm work today?'
+              )}
             </p>
 
           </div>
 
           <button
             type="button"
+            aria-label={
+              t(
+                'Refresh weather'
+              )
+            }
             onClick={() =>
               loadWeather(
                 true
@@ -442,11 +525,12 @@ const feelsLike =
             disabled={
               refreshing
             }
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm disabled:opacity-50"
-            aria-label="Refresh weather"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
             <RefreshCw
-              size={18}
+              size={
+                18
+              }
               className={
                 refreshing
                   ? 'animate-spin'
@@ -457,11 +541,12 @@ const feelsLike =
 
         </header>
 
-        {/* Location */}
         <div className="mb-3 flex items-center gap-1.5 px-1 text-sm text-gray-500">
 
           <MapPin
-            size={15}
+            size={
+              15
+            }
           />
 
           <span>
@@ -474,27 +559,27 @@ const feelsLike =
 
         </div>
 
-        {/* Main weather */}
         <section className="mb-4 rounded-3xl bg-white p-6 shadow-sm">
 
           <div className="flex items-center gap-5">
 
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#F1F6EC]">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#F1F6EC]">
 
               <WeatherIcon
                 kind={
                   currentDescriptor
                     .kind
                 }
-                size={44}
-                className="text-gray-800"
+                size={
+                  44
+                }
               />
 
             </div>
 
             <div>
 
-              <p className="text-4xl font-bold text-gray-900">
+              <p className="text-4xl font-bold">
                 {
                   summary
                     .temperature
@@ -502,44 +587,45 @@ const feelsLike =
                 °C
               </p>
 
-              <p className="mt-1 text-base font-semibold text-gray-700">
-                {
+              <p className="mt-1 font-semibold text-gray-700">
+                {generatedText(
                   currentDescriptor
                     .label
-                }
+                )}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
-                Feels like{' '}
-                {feelsLike}°C
+                {t(
+                  'Feels like'
+                )}{' '}
+                {feelsLike}
+                °C
               </p>
 
             </div>
 
           </div>
 
-          <div className="mt-5 border-t border-gray-100 pt-4">
+          <div className="mt-5 border-t pt-4">
 
             <p className="text-sm font-medium text-gray-700">
-              {summary.detail}
+              {generatedText(
+                summary.detail
+              )}
             </p>
 
           </div>
 
         </section>
 
-        {/* Stale weather notice */}
         {weather.isStale && (
           <section className="mb-4 rounded-xl bg-[#FBF7E8] px-4 py-3">
-
-            <p className="text-sm text-gray-700">
-              Internet weather update is unavailable. Showing the last saved forecast.
-            </p>
-
+            {t(
+              'Internet weather update is unavailable. Showing the last saved forecast.'
+            )}
           </section>
         )}
 
-        {/* Overall farm status */}
         <section
           className={`mb-5 rounded-2xl border p-5 ${
             statusClasses[
@@ -550,46 +636,49 @@ const feelsLike =
           }`}
         >
 
-          <p className="text-lg font-semibold text-gray-900">
-            {
+          <p className="text-lg font-semibold">
+            {generatedText(
               advice
                 .dayStatus
                 .title
-            }
+            )}
           </p>
 
-          <p className="mt-1 text-sm leading-5 text-gray-600">
-            {
+          <p className="mt-1 text-sm text-gray-600">
+            {generatedText(
               advice
                 .dayStatus
                 .detail
-            }
+            )}
           </p>
 
         </section>
 
-        {/* Today's weather details */}
         <section className="mb-5">
 
-          <h2 className="mb-3 text-lg font-semibold text-gray-900">
-            Today
+          <h2 className="mb-3 text-lg font-semibold">
+            {t(
+              'Today'
+            )}
           </h2>
 
           <div className="grid grid-cols-2 gap-3">
 
-            {/* High / low */}
             <div className="rounded-2xl bg-white p-4 shadow-sm">
 
               <Thermometer
-                size={20}
-                className="text-gray-500"
+                size={
+                  20
+                }
               />
 
-              <p className="mt-3 text-xs font-medium text-gray-500">
-                High / Low
+              <p className="mt-3 text-xs text-gray-500">
+                {t(
+                  'High / Low'
+                )}
               </p>
 
-              <p className="mt-1 font-semibold text-gray-900">
+              <p className="mt-1 font-semibold">
                 {
                   metrics
                     .maxTemp
@@ -604,52 +693,62 @@ const feelsLike =
 
             </div>
 
-           {/* Rain remaining */}
-<div className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
 
-  <CloudRain
-    size={20}
-    className="text-gray-500"
-  />
+              <CloudRain
+                size={
+                  20
+                }
+              />
 
-  <p className="mt-3 text-xs font-medium text-gray-500">
-    {isRainingNow
-      ? 'Rain from now'
-      : 'Rain later'}
-  </p>
+              <p className="mt-3 text-xs text-gray-500">
+                {isRainingNow
+                  ? t(
+                      'Rain from now'
+                    )
+                  : t(
+                      'Rain later'
+                    )}
+              </p>
 
-  <p className="mt-1 font-semibold text-gray-900">
-    {
-      remainingRain
-        .rainChance
-    }
-    %
-  </p>
+              <p className="mt-1 font-semibold">
+                {
+                  remainingRain
+                    .rainChance
+                }
+                %
+              </p>
 
-  <p className="mt-0.5 text-xs text-gray-500">
-    {
-      remainingRain
-        .rainMm
-        .toFixed(1)
-    }{' '}
-    mm remaining
-  </p>
+              <p className="text-xs text-gray-500">
+                {
+                  remainingRain
+                    .rainMm
+                    .toFixed(
+                      1
+                    )
+                }{' '}
+                {t(
+                  'mm remaining'
+                )}
+              </p>
 
-</div>
+            </div>
 
-            {/* Humidity */}
             <div className="rounded-2xl bg-white p-4 shadow-sm">
 
               <Droplets
-                size={20}
-                className="text-gray-500"
+                size={
+                  20
+                }
               />
 
-              <p className="mt-3 text-xs font-medium text-gray-500">
-                Humidity now
+              <p className="mt-3 text-xs text-gray-500">
+                {t(
+                  'Humidity now'
+                )}
               </p>
 
-              <p className="mt-1 font-semibold text-gray-900">
+              <p className="mt-1 font-semibold">
                 {
                   metrics
                     .humidity
@@ -659,33 +758,41 @@ const feelsLike =
 
             </div>
 
-            {/* Wind */}
             <div className="rounded-2xl bg-white p-4 shadow-sm">
 
               <Wind
-                size={20}
-                className="text-gray-500"
+                size={
+                  20
+                }
               />
 
-              <p className="mt-3 text-xs font-medium text-gray-500">
-                Max wind
+              <p className="mt-3 text-xs text-gray-500">
+                {t(
+                  'Max wind'
+                )}
               </p>
 
-              <p className="mt-1 font-semibold text-gray-900">
+              <p className="mt-1 font-semibold">
                 {
                   metrics
                     .maxWind
                 }{' '}
-                km/h
+                {t(
+                  'km/h'
+                )}
               </p>
 
-              <p className="mt-0.5 text-xs text-gray-500">
-                Gust{' '}
+              <p className="text-xs text-gray-500">
+                {t(
+                  'Gust'
+                )}{' '}
                 {
                   metrics
                     .maxGust
                 }{' '}
-                km/h
+                {t(
+                  'km/h'
+                )}
               </p>
 
             </div>
@@ -694,34 +801,40 @@ const feelsLike =
 
         </section>
 
-        {/* Rain timing */}
         <section className="mb-5 rounded-2xl bg-white p-5 shadow-sm">
 
           <div className="mb-4 flex items-center gap-2">
 
             <CloudRain
-              size={20}
+              size={
+                20
+              }
             />
 
-            <h2 className="text-lg font-semibold text-gray-900">
-              Rain timing
+            <h2 className="text-lg font-semibold">
+              {t(
+                'Rain timing'
+              )}
             </h2>
 
           </div>
 
-          {rainWindows.length ===
-0 ? (
-  <div>
+          {rainWindows
+            .length ===
+          0 ? (
+            <>
+              <p className="font-medium">
+                {t(
+                  'No more rain expected today'
+                )}
+              </p>
 
-    <p className="font-medium text-gray-800">
-      No more rain expected today
-    </p>
-
-    <p className="mt-1 text-sm leading-5 text-gray-500">
-      The forecast from now until tonight is mostly dry. Local showers can still develop, so check the sky before weather-sensitive work.
-    </p>
-
-  </div>
+              <p className="mt-1 text-sm text-gray-500">
+                {t(
+                  'The forecast from now until tonight is mostly dry. Local showers can still develop, so check the sky before weather-sensitive work.'
+                )}
+              </p>
+            </>
           ) : (
             <div className="space-y-3">
 
@@ -737,30 +850,31 @@ const feelsLike =
                   ) => (
                     <div
                       key={`${window.start}-${index}`}
-                      className="flex items-center justify-between gap-4 rounded-xl bg-[#F7F5EF] px-4 py-3"
+                      className="flex items-center justify-between rounded-xl bg-[#F7F5EF] px-4 py-3"
                     >
 
                       <div>
 
-                        <p className="font-semibold text-gray-900">
-                          {
-                            window
-                              .label
-                          }
+                        <p className="font-semibold">
+                          {localizeTime(
+                            window.label
+                          )}
                         </p>
 
-                        <p className="mt-0.5 text-xs text-gray-500">
-                          Up to{' '}
-                          {
-                            window
-                              .maxProbability
-                          }
-                          % chance
+                        <p className="text-xs text-gray-500">
+                          {t(
+                            'Up to {chance}% chance',
+                            {
+                              chance:
+                                window
+                                  .maxProbability,
+                            }
+                          )}
                         </p>
 
                       </div>
 
-                      <p className="shrink-0 text-sm font-medium text-gray-600">
+                      <p className="text-sm text-gray-600">
                         {
                           window
                             .rainMm
@@ -768,7 +882,9 @@ const feelsLike =
                               1
                             )
                         }{' '}
-                        mm
+                        {t(
+                          'mm'
+                        )}
                       </p>
 
                     </div>
@@ -780,15 +896,18 @@ const feelsLike =
 
         </section>
 
-        {/* Farm plan */}
         <section className="mb-5">
 
-          <h2 className="text-xl font-bold text-gray-900">
-            Farm plan for today
+          <h2 className="text-xl font-bold">
+            {t(
+              'Farm plan for today'
+            )}
           </h2>
 
-          <p className="mt-1 text-sm leading-5 text-gray-500">
-            Suggestions based on today's weather at the farm.
+          <p className="mt-1 text-sm text-gray-500">
+            {t(
+              "Suggestions based on today's weather at the farm."
+            )}
           </p>
 
         </section>
@@ -801,6 +920,12 @@ const feelsLike =
               advice.good
             }
             tone="good"
+            t={
+              t
+            }
+            generatedText={
+              generatedText
+            }
           />
 
           <AdviceSection
@@ -809,6 +934,12 @@ const feelsLike =
               advice.avoid
             }
             tone="avoid"
+            t={
+              t
+            }
+            generatedText={
+              generatedText
+            }
           />
 
           <AdviceSection
@@ -817,18 +948,25 @@ const feelsLike =
               advice.caution
             }
             tone="caution"
+            t={
+              t
+            }
+            generatedText={
+              generatedText
+            }
           />
 
         </div>
 
-        {/* Next days */}
         <section className="mt-6 rounded-2xl bg-white p-5 shadow-sm">
 
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">
-            Next few days
+          <h2 className="mb-4 text-lg font-semibold">
+            {t(
+              'Next few days'
+            )}
           </h2>
 
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y">
 
             {forecast.map(
               (
@@ -847,48 +985,36 @@ const feelsLike =
                     key={
                       day.date
                     }
-                    className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                    className="flex items-center gap-3 py-3"
                   >
 
-                    <div className="w-20 shrink-0">
-
-                      <p className="text-sm font-medium text-gray-700">
-                  {formatForecastDate(
-  day.date,
-  index,
-  weather.timezone
-)}
-                      </p>
-
+                    <div className="w-24 shrink-0 text-sm">
+                      {formatForecastDate(
+                        day.date,
+                        index,
+                        weather.timezone
+                      )}
                     </div>
 
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F7F5EF]">
+                    <WeatherIcon
+                      kind={
+                        descriptor
+                          .kind
+                      }
+                      size={
+                        20
+                      }
+                    />
 
-                      <WeatherIcon
-                        kind={
-                          descriptor
-                            .kind
-                        }
-                        size={20}
-                        className="text-gray-700"
-                      />
-
+                    <div className="min-w-0 flex-1 text-sm text-gray-600">
+                      {generatedText(
+                        descriptor.label
+                      )}
                     </div>
 
-                    <div className="min-w-0 flex-1">
+                    <div className="text-right">
 
-                      <p className="truncate text-sm text-gray-600">
-                        {
-                          descriptor
-                            .label
-                        }
-                      </p>
-
-                    </div>
-
-                    <div className="shrink-0 text-right">
-
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold">
                         {
                           day
                             .maxTemp
@@ -901,13 +1027,15 @@ const feelsLike =
                         °
                       </p>
 
-                      <p className="mt-0.5 text-xs text-gray-500">
-                        Rain{' '}
-                        {
-                          day
-                            .rainChance
-                        }
-                        %
+                      <p className="text-xs text-gray-500">
+                        {t(
+                          'Rain {chance}%',
+                          {
+                            chance:
+                              day
+                                .rainChance,
+                          }
+                        )}
                       </p>
 
                     </div>
@@ -921,24 +1049,28 @@ const feelsLike =
 
         </section>
 
-        {/* Guidance note */}
         <section className="mt-5 rounded-2xl bg-white p-4 shadow-sm">
 
           <div className="flex items-start gap-3">
 
             <Info
-              size={19}
-              className="mt-0.5 shrink-0 text-gray-500"
+              size={
+                19
+              }
             />
 
             <div>
 
-              <p className="text-sm font-medium text-gray-800">
-                Weather guide
+              <p className="text-sm font-medium">
+                {t(
+                  'Weather guide'
+                )}
               </p>
 
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                Farm suggestions use weather only. They do not know the exact soil condition, crop stage or chemical being used. Always check actual farm conditions and follow pesticide or fertiliser product instructions.
+                {t(
+                  'Farm suggestions use weather only. They do not know the exact soil condition, crop stage or chemical being used. Always check actual farm conditions and follow pesticide or fertiliser product instructions.'
+                )}
               </p>
 
             </div>
@@ -947,23 +1079,29 @@ const feelsLike =
 
         </section>
 
-        {/* Updated */}
         <p className="mt-5 text-center text-xs text-gray-400">
 
-          Updated{' '}
-          {formatWeatherUpdatedTime(
-  weather.fetchedAt,
-  weather.timezone
-)}
+          {t(
+            'Updated'
+          )}{' '}
+
+          {formatTime(
+            weather.fetchedAt,
+            weather.timezone
+          )}
 
           {' · '}
 
-          Weather data by Open-Meteo
+          {t(
+            'Weather data by Open-Meteo'
+          )}
 
         </p>
 
         <p className="mt-2 pb-4 text-center text-xs text-gray-400">
-          Krishi Book · Farm Assistant
+          {t(
+            'Krishi Book · Farm Assistant'
+          )}
         </p>
 
       </main>

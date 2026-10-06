@@ -16,10 +16,7 @@ import {
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_VERSION,
-  getDefaultExpenseType,
-  getExpenseOptions,
-  hasExpenseSubcategories,
-  mapExpenseToV2,
+  mapExpenseToV3,
 } from '../data/expenseCategories'
 
 function Expense({
@@ -27,13 +24,17 @@ function Expense({
   existingTransaction,
 }) {
   /*
-   * This also lets old transactions
-   * open correctly before the DB
-   * migration has been performed.
+   * Old transactions may still have:
+   *
+   * category: "Crop"
+   * expenseType: "Pesticide"
+   *
+   * Convert that into the final
+   * V3 category for display/editing.
    */
   const existingMapped =
     existingTransaction
-      ? mapExpenseToV2(
+      ? mapExpenseToV3(
           existingTransaction.category,
           existingTransaction.expenseType
         )
@@ -48,25 +49,19 @@ function Expense({
   )
 
   const [
-    expenseType,
-    setExpenseType,
+    amount,
+    setAmount,
   ] = useState(
-    existingMapped?.expenseType ||
+    existingTransaction?.amount ||
       ''
   )
-
-  const [amount, setAmount] =
-    useState(
-      existingTransaction?.amount ||
-        ''
-    )
 
   /*
    * Labour
    *
-   * Fall back to the older labour
-   * fields so old records remain
-   * editable.
+   * Old labour fields remain
+   * supported so historical records
+   * can still be edited.
    */
   const [
     menCount,
@@ -95,7 +90,8 @@ function Expense({
     setWomenCount,
   ] = useState(
     existingTransaction
-      ?.womenCount ?? ''
+      ?.womenCount ??
+      ''
   )
 
   const [
@@ -103,190 +99,243 @@ function Expense({
     setWomenDailyCharge,
   ] = useState(
     existingTransaction
-      ?.womenDailyCharge ?? ''
+      ?.womenDailyCharge ??
+      ''
   )
 
-  const [date, setDate] =
-    useState(
-      existingTransaction?.date ||
-        new Date()
-          .toISOString()
-          .split('T')[0]
-    )
+  const [
+    date,
+    setDate,
+  ] = useState(
+    existingTransaction?.date ||
+      new Date()
+        .toISOString()
+        .split('T')[0]
+  )
 
-  const [notes, setNotes] =
-    useState(
-      existingTransaction?.notes ||
-        ''
-    )
+  const [
+    notes,
+    setNotes,
+  ] = useState(
+    existingTransaction?.notes ||
+      ''
+  )
 
   const isLabour =
-    category === 'Labour'
-
-  const hasSubcategories =
-    hasExpenseSubcategories(
-      category
-    )
-
-  const effectiveExpenseType =
-    expenseType ||
-    getDefaultExpenseType(
-      category
-    )
+    category ===
+    'Labour'
 
   const menTotal =
-    Number(menCount || 0) *
     Number(
-      menDailyCharge || 0
+      menCount ||
+      0
+    ) *
+    Number(
+      menDailyCharge ||
+      0
     )
 
   const womenTotal =
     Number(
-      womenCount || 0
+      womenCount ||
+      0
     ) *
     Number(
-      womenDailyCharge || 0
+      womenDailyCharge ||
+      0
     )
 
   const labourTotal =
-    menTotal + womenTotal
+    menTotal +
+    womenTotal
 
   const finalAmount =
     isLabour
       ? labourTotal
-      : Number(amount || 0)
+      : Number(
+          amount ||
+          0
+        )
 
   const handleCategoryChange =
-    (newCategory) => {
+    (
+      newCategory
+    ) => {
       setCategory(
         newCategory
       )
 
       /*
-       * Categories with no second
-       * dropdown automatically use
-       * their category as expenseType.
+       * Clear irrelevant values when
+       * switching between Labour and
+       * a normal expense category.
        */
-      setExpenseType(
-        getDefaultExpenseType(
-          newCategory
+      if (
+        newCategory ===
+        'Labour'
+      ) {
+        setAmount('')
+      }
+    }
+
+  const handleSave =
+    () => {
+      if (
+        !category
+      ) {
+        alert(
+          'Please choose what you spent on.'
         )
-      )
-    }
 
-  const handleSave = () => {
-    if (!category) {
-      alert(
-        'Please choose what you spent on.'
-      )
+        return
+      }
 
-      return
-    }
+      if (
+        finalAmount <=
+        0
+      ) {
+        alert(
+          'Please enter the amount.'
+        )
 
-    if (
-      !effectiveExpenseType
-    ) {
-      alert(
-        'Please choose the expense type.'
-      )
+        return
+      }
 
-      return
-    }
+      /*
+       * Preserve old classification
+       * before converting the record.
+       *
+       * These are useful if we ever
+       * need to audit/reverse an old
+       * migration.
+       */
+      const legacyCategory =
+        existingTransaction
+          ?.legacyCategory ||
+        existingTransaction
+          ?.category
 
-    if (
-      finalAmount <= 0
-    ) {
-      alert(
-        'Please enter the amount.'
-      )
+      const legacyExpenseType =
+        existingTransaction
+          ?.legacyExpenseType ||
+        existingTransaction
+          ?.expenseType
 
-      return
-    }
+      const expense = {
+        ...(existingTransaction ||
+          {}),
 
-    /*
-     * Spread the existing transaction
-     * first so migration fields such as
-     * legacyCategory are NEVER lost
-     * when an old record is edited.
-     */
-    const expense = {
-      ...(existingTransaction ||
-        {}),
+        id:
+          existingTransaction
+            ?.id ||
+          Date.now(),
 
-      id:
-        existingTransaction?.id ||
-        Date.now(),
+        type:
+          'expense',
 
-      type: 'expense',
+        /*
+         * This is now the FINAL
+         * expense classification.
+         */
+        category,
 
-      category,
+        categoryVersion:
+          EXPENSE_CATEGORY_VERSION,
 
-      expenseType:
-        effectiveExpenseType,
+        amount:
+          finalAmount,
 
-      categoryVersion:
-        EXPENSE_CATEGORY_VERSION,
+        date,
 
-      amount:
-        finalAmount,
+        notes,
 
-      date,
-
-      notes,
-
-      menCount:
-        isLabour
-          ? Number(
-              menCount || 0
-            )
-          : 0,
-
-      menDailyCharge:
-        isLabour
-          ? Number(
-              menDailyCharge ||
+        menCount:
+          isLabour
+            ? Number(
+                menCount ||
                 0
-            )
-          : 0,
+              )
+            : 0,
 
-      womenCount:
-        isLabour
-          ? Number(
-              womenCount || 0
-            )
-          : 0,
-
-      womenDailyCharge:
-        isLabour
-          ? Number(
-              womenDailyCharge ||
+        menDailyCharge:
+          isLabour
+            ? Number(
+                menDailyCharge ||
                 0
-            )
-          : 0,
+              )
+            : 0,
+
+        womenCount:
+          isLabour
+            ? Number(
+                womenCount ||
+                0
+              )
+            : 0,
+
+        womenDailyCharge:
+          isLabour
+            ? Number(
+                womenDailyCharge ||
+                0
+              )
+            : 0,
+      }
+
+      /*
+       * Preserve historical values
+       * only when editing an older
+       * transaction.
+       */
+      if (
+        existingTransaction &&
+        legacyCategory
+      ) {
+        expense.legacyCategory =
+          legacyCategory
+      }
+
+      if (
+        existingTransaction &&
+        legacyExpenseType
+      ) {
+        expense.legacyExpenseType =
+          legacyExpenseType
+      }
+
+      /*
+       * Category V3 does NOT use
+       * expenseType anymore.
+       *
+       * updateTransaction() uses
+       * Firestore setDoc(), so removing
+       * it here also removes it from the
+       * updated Firestore document.
+       */
+      delete expense.expenseType
+
+      if (
+        existingTransaction
+      ) {
+        updateTransaction(
+          expense
+        )
+
+        alert(
+          'Expense updated successfully!'
+        )
+      } else {
+        saveTransaction(
+          expense
+        )
+
+        alert(
+          'Expense saved successfully!'
+        )
+      }
+
+      onBack()
     }
-
-    if (
-      existingTransaction
-    ) {
-      updateTransaction(
-        expense
-      )
-
-      alert(
-        'Expense updated successfully!'
-      )
-    } else {
-      saveTransaction(
-        expense
-      )
-
-      alert(
-        'Expense saved successfully!'
-      )
-    }
-
-    onBack()
-  }
 
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
@@ -298,7 +347,9 @@ function Expense({
 
           <button
             type="button"
-            onClick={onBack}
+            onClick={
+              onBack
+            }
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
             <ArrowLeft
@@ -334,10 +385,16 @@ function Expense({
 
             <select
               id="category"
-              value={category}
-              onChange={(event) =>
+              value={
+                category
+              }
+              onChange={(
+                event
+              ) =>
                 handleCategoryChange(
-                  event.target.value
+                  event
+                    .target
+                    .value
                 )
               }
               className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-4 pr-10 text-base font-medium text-gray-900 outline-none"
@@ -348,7 +405,9 @@ function Expense({
               </option>
 
               {EXPENSE_CATEGORIES.map(
-                (item) => (
+                (
+                  item
+                ) => (
                   <option
                     key={
                       item.value
@@ -375,72 +434,8 @@ function Expense({
 
         </section>
 
-        {/* Expense Type */}
-        {category &&
-          hasSubcategories && (
-          <section className="mb-5">
-
-            <label
-              htmlFor="expenseType"
-              className="mb-2 block text-sm font-medium text-gray-600"
-            >
-              What did you spend on?
-            </label>
-
-            <div className="relative">
-
-              <select
-                id="expenseType"
-                value={
-                  expenseType
-                }
-                onChange={(
-                  event
-                ) =>
-                  setExpenseType(
-                    event.target
-                      .value
-                  )
-                }
-                className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-4 pr-10 text-base font-medium text-gray-900 outline-none"
-              >
-
-                <option value="">
-                  Choose expense
-                </option>
-
-                {getExpenseOptions(
-                  category
-                ).map(
-                  (item) => (
-                    <option
-                      key={
-                        item
-                      }
-                      value={
-                        item
-                      }
-                    >
-                      {item}
-                    </option>
-                  )
-                )}
-
-              </select>
-
-              <ChevronDown
-                size={20}
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-              />
-
-            </div>
-
-          </section>
-        )}
-
         {/* Labour */}
-        {isLabour &&
-          effectiveExpenseType && (
+        {isLabour && (
           <section className="mb-5 rounded-2xl bg-white p-5 shadow-sm">
 
             <p className="mb-4 text-base font-semibold text-gray-900">
@@ -477,7 +472,8 @@ function Expense({
                       event
                     ) =>
                       setMenCount(
-                        event.target
+                        event
+                          .target
                           .value
                       )
                     }
@@ -514,7 +510,8 @@ function Expense({
                         event
                       ) =>
                         setMenDailyCharge(
-                          event.target
+                          event
+                            .target
                             .value
                         )
                       }
@@ -528,7 +525,8 @@ function Expense({
 
               </div>
 
-              {menTotal > 0 && (
+              {menTotal >
+                0 && (
                 <p className="mt-3 text-sm text-gray-500">
                   Men: ₹
                   {menTotal.toLocaleString(
@@ -569,7 +567,8 @@ function Expense({
                       event
                     ) =>
                       setWomenCount(
-                        event.target
+                        event
+                          .target
                           .value
                       )
                     }
@@ -606,7 +605,8 @@ function Expense({
                         event
                       ) =>
                         setWomenDailyCharge(
-                          event.target
+                          event
+                            .target
                             .value
                         )
                       }
@@ -620,7 +620,8 @@ function Expense({
 
               </div>
 
-              {womenTotal > 0 && (
+              {womenTotal >
+                0 && (
                 <p className="mt-3 text-sm text-gray-500">
                   Women: ₹
                   {womenTotal.toLocaleString(
@@ -652,9 +653,9 @@ function Expense({
           </section>
         )}
 
-        {/* Regular Amount */}
-        {!isLabour &&
-          effectiveExpenseType && (
+        {/* Normal expense amount */}
+        {category &&
+          !isLabour && (
           <section className="mb-5">
 
             <label
@@ -675,12 +676,15 @@ function Expense({
                 type="number"
                 inputMode="decimal"
                 min="0"
-                value={amount}
+                value={
+                  amount
+                }
                 onChange={(
                   event
                 ) =>
                   setAmount(
-                    event.target
+                    event
+                      .target
                       .value
                   )
                 }
@@ -693,8 +697,8 @@ function Expense({
           </section>
         )}
 
-        {/* Date + Notes + Save */}
-        {effectiveExpenseType && (
+        {/* Common details */}
+        {category && (
           <>
 
             <section className="mb-5">
@@ -709,12 +713,16 @@ function Expense({
               <input
                 id="date"
                 type="date"
-                value={date}
+                value={
+                  date
+                }
                 onChange={(
                   event
                 ) =>
                   setDate(
-                    event.target.value
+                    event
+                      .target
+                      .value
                   )
                 }
                 className="block w-full min-w-0 max-w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
@@ -733,12 +741,16 @@ function Expense({
 
               <textarea
                 id="notes"
-                value={notes}
+                value={
+                  notes
+                }
                 onChange={(
                   event
                 ) =>
                   setNotes(
-                    event.target.value
+                    event
+                      .target
+                      .value
                   )
                 }
                 placeholder="Optional"
@@ -756,7 +768,9 @@ function Expense({
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white shadow-sm transition active:scale-[0.98]"
             >
 
-              <Save size={20} />
+              <Save
+                size={20}
+              />
 
               {existingTransaction
                 ? 'Update Expense'

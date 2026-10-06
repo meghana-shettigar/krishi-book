@@ -24,13 +24,14 @@ function getProfileRef(
   )
 }
 
-/*
- * Create the top-level user profile
- * if it does not already exist.
- *
- * Existing parents' transactions and
- * contacts are completely untouched.
- */
+function normalizeProfileLanguage(
+  language
+) {
+  return language === 'kn'
+    ? 'kn'
+    : 'en'
+}
+
 export async function ensureUserProfile(
   firebaseUser,
   initialProfile = {}
@@ -49,23 +50,19 @@ export async function ensureUserProfile(
       profileRef
     )
 
-  /*
-   * Existing account without
-   * a profile document.
-   *
-   * This will happen once for your
-   * parents because their account
-   * existed before profiles did.
-   */
   if (!snapshot.exists()) {
     const profile = {
       email:
         firebaseUser.email ||
         '',
 
-      language: 'en',
+      language:
+        normalizeProfileLanguage(
+          initialProfile.language
+        ),
 
-      farmLocation: null,
+      farmLocation:
+        null,
 
       onboardingComplete:
         false,
@@ -88,13 +85,6 @@ export async function ensureUserProfile(
           .trim()
     }
 
-    /*
-     * merge:true is important.
-     *
-     * users/{uid} may already have
-     * transaction/contact
-     * subcollections.
-     */
     await setDoc(
       profileRef,
       profile,
@@ -102,33 +92,67 @@ export async function ensureUserProfile(
         merge: true,
       }
     )
-  } else if (
-    initialProfile
-      .name
-      ?.trim() &&
-    !snapshot.data()?.name
-  ) {
-    /*
-     * Handles a newly-created account
-     * where the authentication listener
-     * and signup process happen nearly
-     * at the same time.
-     */
-    await setDoc(
-      profileRef,
-      {
-        name:
-          initialProfile
-            .name
-            .trim(),
+  } else {
+    const existing =
+      snapshot.data() ||
+      {}
 
-        updatedAt:
-          serverTimestamp(),
-      },
-      {
-        merge: true,
+    const updates = {}
+
+    if (
+      initialProfile
+        .name
+        ?.trim() &&
+      !existing.name
+    ) {
+      updates.name =
+        initialProfile
+          .name
+          .trim()
+    }
+
+    /*
+     * Important for new-account race:
+     *
+     * App.jsx may create the profile
+     * milliseconds before Login.jsx
+     * finishes account creation.
+     */
+    if (
+      initialProfile.language
+    ) {
+      const requestedLanguage =
+        normalizeProfileLanguage(
+          initialProfile.language
+        )
+
+      if (
+        existing.language !==
+        requestedLanguage
+      ) {
+        updates.language =
+          requestedLanguage
       }
-    )
+    }
+
+    if (
+      Object.keys(
+        updates
+      ).length > 0
+    ) {
+      await setDoc(
+        profileRef,
+        {
+          ...updates,
+
+          updatedAt:
+            serverTimestamp(),
+        },
+        {
+          merge: true,
+        }
+      )
+    }
   }
 
   return getUserProfile(
@@ -167,7 +191,52 @@ export async function getUserProfile(
 }
 
 /*
- * Save the confirmed farm location.
+ * Save account language.
+ *
+ * This changes only presentation.
+ * Transactions and contacts are
+ * never rewritten.
+ */
+export async function saveLanguage(
+  language
+) {
+  const user =
+    auth.currentUser
+
+  if (!user) {
+    throw new Error(
+      'Please sign in first.'
+    )
+  }
+
+  const normalized =
+    normalizeProfileLanguage(
+      language
+    )
+
+  await setDoc(
+    getProfileRef(
+      user.uid
+    ),
+    {
+      language:
+        normalized,
+
+      updatedAt:
+        serverTimestamp(),
+    },
+    {
+      merge: true,
+    }
+  )
+
+  return getUserProfile(
+    user.uid
+  )
+}
+
+/*
+ * Save confirmed farm location.
  */
 export async function saveFarmLocation(
   farmLocation
@@ -202,7 +271,8 @@ export async function saveFarmLocation(
         locationSource:
           'device',
 
-        confirmed: true,
+        confirmed:
+          true,
       },
 
       onboardingComplete:
@@ -216,10 +286,6 @@ export async function saveFarmLocation(
     }
   )
 
-  /*
-   * The old weather forecast may
-   * belong to the previous location.
-   */
   localStorage.removeItem(
     'krishiBookFarmWeatherV1'
   )

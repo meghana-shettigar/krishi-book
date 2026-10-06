@@ -1,25 +1,41 @@
-export const EXPENSE_CATEGORY_VERSION = 2
+export const EXPENSE_CATEGORY_VERSION = 3
 
+/*
+ * Category V3
+ *
+ * Expense categories are now flat.
+ *
+ * There are no subcategories.
+ * Whatever the farmer selects here
+ * is the final category saved to
+ * Firestore.
+ */
 export const EXPENSE_CATEGORIES = [
   {
     value: 'Labour',
     label: 'Labour',
-    options: [
-      'Cleaning',
-      'Planting',
-      'General / Other Work',
-    ],
   },
 
   {
-    value: 'Crop',
-    label: 'Crop',
-    options: [
+    value:
       'Fertilizer / Chunna / Compost',
-      'Pesticide',
-      'New Plants / Seeds',
-      'Other Crop Expense',
-    ],
+    label:
+      'Fertilizer / Chunna / Compost',
+  },
+
+  {
+    value: 'Pesticide',
+    label: 'Pesticide',
+  },
+
+  {
+    value: 'New Plants / Seeds',
+    label: 'New Plants / Seeds',
+  },
+
+  {
+    value: 'Other Crop Expense',
+    label: 'Other Crop Expense',
   },
 
   {
@@ -27,7 +43,6 @@ export const EXPENSE_CATEGORIES = [
       'Water / Pipe / Sprinkler / Borewell',
     label:
       'Water / Pipe / Sprinkler / Borewell',
-    options: [],
   },
 
   {
@@ -35,7 +50,6 @@ export const EXPENSE_CATEGORIES = [
       'Machine / Transport / Tools',
     label:
       'Machine / Transport / Tools',
-    options: [],
   },
 
   {
@@ -43,73 +57,32 @@ export const EXPENSE_CATEGORIES = [
       'Land / Boundary / Levelling',
     label:
       'Land / Boundary / Levelling',
-    options: [],
   },
 
   {
     value: 'Other Expense',
     label: 'Other Expense',
-    options: [],
   },
 ]
 
-export function getExpenseCategoryDefinition(
-  category
-) {
-  return EXPENSE_CATEGORIES.find(
-    (item) =>
-      item.value === category
-  )
-}
-
-export function getExpenseOptions(
-  category
-) {
-  return (
-    getExpenseCategoryDefinition(
-      category
-    )?.options || []
-  )
-}
-
-export function hasExpenseSubcategories(
-  category
-) {
-  return (
-    getExpenseOptions(
-      category
-    ).length > 0
-  )
-}
-
-export function getDefaultExpenseType(
-  category
-) {
-  if (!category) {
-    return ''
-  }
-
-  if (
-    hasExpenseSubcategories(
-      category
+const FINAL_CATEGORIES =
+  new Set(
+    EXPENSE_CATEGORIES.map(
+      (item) =>
+        item.value
     )
-  ) {
-    return ''
-  }
-
-  return category
-}
+  )
 
 /*
- * Converts both old and new
- * classifications to Category V2.
+ * Converts old V1 / V2 records
+ * into the final flat V3 category.
  *
- * Returns null only when we find
- * something we don't recognise.
- * That protects the migration from
- * silently changing unknown data.
+ * This allows old records to remain
+ * readable and editable even before
+ * every Firestore document has been
+ * manually migrated.
  */
-export function mapExpenseToV2(
+export function mapExpenseToV3(
   category,
   expenseType
 ) {
@@ -118,67 +91,46 @@ export function mapExpenseToV2(
   }
 
   /*
-   * Already-new single-level categories
+   * Already using a final V3 category.
    */
   if (
-    category ===
-      'Water / Pipe / Sprinkler / Borewell' ||
-    category ===
-      'Machine / Transport / Tools' ||
-    category ===
-      'Land / Boundary / Levelling' ||
-    category ===
-      'Other Expense'
+    FINAL_CATEGORIES.has(
+      category
+    )
   ) {
     return {
       category,
-      expenseType: category,
     }
   }
 
   /*
-   * LABOUR
+   * --------------------------------
+   * OLD LABOUR
+   * --------------------------------
+   *
+   * Cleaning / Planting / General Work
+   * are no longer categories.
+   *
+   * All become Labour.
    */
   if (
-    category === 'Manual Labour' ||
-    category === 'Labour'
+    category === 'Labour' ||
+    category === 'Manual Labour'
   ) {
-    const labourMap = {
-      Cleaning: 'Cleaning',
-
-      Planting: 'Planting',
-
-      'General farm work':
-        'General / Other Work',
-
-      'General / Other Work':
-        'General / Other Work',
-
-      Harvesting:
-        'General / Other Work',
-
-      Other:
-        'General / Other Work',
-    }
-
-    const mappedType =
-      labourMap[expenseType]
-
-    if (!mappedType) {
-      return null
-    }
-
     return {
-      category: 'Labour',
-      expenseType:
-        mappedType,
+      category:
+        'Labour',
     }
   }
 
   /*
-   * CROP
+   * --------------------------------
+   * OLD CROP CATEGORY
+   * --------------------------------
    */
-  if (category === 'Crop') {
+  if (
+    category === 'Crop'
+  ) {
     const cropMap = {
       Fertilizer:
         'Fertilizer / Chunna / Compost',
@@ -211,72 +163,107 @@ export function mapExpenseToV2(
         'Other Crop Expense',
     }
 
-    const mappedType =
-      cropMap[expenseType]
+    const mappedCategory =
+      cropMap[
+        expenseType
+      ]
 
-    if (!mappedType) {
+    if (
+      !mappedCategory
+    ) {
       return null
     }
 
     return {
-      category: 'Crop',
-      expenseType:
-        mappedType,
+      category:
+        mappedCategory,
     }
   }
 
   /*
-   * OLD WATER
+   * --------------------------------
+   * VERY OLD CROP VALUES
+   * --------------------------------
    */
-  if (category === 'Water') {
+
+  if (
+    category ===
+      'Fertilizer' ||
+    category ===
+      'Chunna' ||
+    category ===
+      'Compost'
+  ) {
+    return {
+      category:
+        'Fertilizer / Chunna / Compost',
+    }
+  }
+
+  if (
+    category ===
+    'New Plant'
+  ) {
+    return {
+      category:
+        'New Plants / Seeds',
+    }
+  }
+
+  if (
+    category ===
+    'New Seeds'
+  ) {
+    return {
+      category:
+        'New Plants / Seeds',
+    }
+  }
+
+  /*
+   * --------------------------------
+   * OLD SINGLE CATEGORIES
+   * --------------------------------
+   */
+
+  if (
+    category ===
+    'Water'
+  ) {
     return {
       category:
         'Water / Pipe / Sprinkler / Borewell',
-
-      expenseType:
-        'Water / Pipe / Sprinkler / Borewell',
     }
   }
 
-  /*
-   * OLD EQUIPMENT
-   */
   if (
-    category === 'Equipment'
+    category ===
+    'Equipment'
   ) {
     return {
       category:
         'Machine / Transport / Tools',
-
-      expenseType:
-        'Machine / Transport / Tools',
     }
   }
 
-  /*
-   * OLD LAND
-   */
-  if (category === 'Land') {
-    return {
-      category:
-        'Land / Boundary / Levelling',
-
-      expenseType:
-        'Land / Boundary / Levelling',
-    }
-  }
-
-  /*
-   * OLD OTHER
-   */
   if (
-    category === 'Others'
+    category ===
+    'Land'
   ) {
     return {
       category:
-        'Other Expense',
+        'Land / Boundary / Levelling',
+    }
+  }
 
-      expenseType:
+  if (
+    category ===
+      'Others' ||
+    category ===
+      'Other'
+  ) {
+    return {
+      category:
         'Other Expense',
     }
   }

@@ -28,6 +28,10 @@ import {
   getSearchSuggestion,
 } from '../utils/transactionSearch'
 
+import {
+  mapExpenseToV3,
+} from '../data/expenseCategories'
+
 function Details({
   period,
   customFrom,
@@ -43,10 +47,6 @@ function Details({
     setSearchQuery,
   ] = useState('')
 
-  /*
-   * First filter by the date period
-   * selected on the main screen.
-   */
   const filteredTransactions =
     period === 'custom'
       ? transactions.filter(
@@ -81,22 +81,11 @@ function Details({
           period
         )
 
-  /*
-   * The financial summary remains
-   * based on the complete selected
-   * date period.
-   *
-   * Searching only changes the list
-   * underneath.
-   */
   const totals =
     calculateTotals(
       filteredTransactions
     )
 
-  /*
-   * Now apply live search.
-   */
   const searchedTransactions =
     filteredTransactions.filter(
       (transaction) =>
@@ -106,10 +95,6 @@ function Details({
         )
     )
 
-  /*
-   * Suggest spelling using all
-   * historical transactions.
-   */
   const searchSuggestion =
     getSearchSuggestion(
       searchQuery,
@@ -164,12 +149,13 @@ function Details({
 
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-        {/* Header */}
         <header className="mb-8 flex items-center gap-3">
 
           <button
             type="button"
-            onClick={onBack}
+            onClick={
+              onBack
+            }
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
             <ArrowLeft
@@ -207,7 +193,6 @@ function Details({
 
         </header>
 
-        {/* Summary */}
         <section className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
 
           <div className="mb-5 flex items-center justify-between">
@@ -265,9 +250,10 @@ function Details({
 
         </section>
 
-        {/* Search */}
         <TransactionSearch
-          query={searchQuery}
+          query={
+            searchQuery
+          }
           onChange={
             setSearchQuery
           }
@@ -276,7 +262,6 @@ function Details({
           }
         />
 
-        {/* Transactions */}
         <section>
 
           <div className="mb-3 flex items-center justify-between">
@@ -298,11 +283,9 @@ function Details({
             <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
 
               <p className="text-sm font-medium text-gray-700">
-
                 {searchQuery
                   ? 'No matching transactions found'
                   : 'No transactions for this period'}
-
               </p>
 
               {searchQuery && (
@@ -333,14 +316,24 @@ function Details({
                       transaction.type ===
                       'income'
 
+                    const mappedExpense =
+                      !isIncome
+                        ? mapExpenseToV3(
+                            transaction.category,
+                            transaction.expenseType
+                          )
+                        : null
+
+                    const expenseCategory =
+                      mappedExpense
+                        ?.category ||
+                      transaction.category
+
                     const isLabour =
-  !isIncome &&
-  (
-    transaction.category ===
-      'Labour' ||
-    transaction.category ===
-      'Manual Labour'
-  )
+                      !isIncome &&
+                      expenseCategory ===
+                        'Labour'
+
                     const hasSaleDetails =
                       isIncome &&
                       transaction.quantity !=
@@ -351,25 +344,25 @@ function Details({
                     const menCount =
                       Number(
                         transaction.menCount ||
-                          0
+                        0
                       )
 
                     const menRate =
                       Number(
                         transaction.menDailyCharge ||
-                          0
+                        0
                       )
 
                     const womenCount =
                       Number(
                         transaction.womenCount ||
-                          0
+                        0
                       )
 
                     const womenRate =
                       Number(
                         transaction.womenDailyCharge ||
-                          0
+                        0
                       )
 
                     const menTotal =
@@ -381,7 +374,8 @@ function Details({
                       womenRate
 
                     const hasMen =
-                      menCount > 0
+                      menCount >
+                      0
 
                     const hasWomen =
                       womenCount >
@@ -404,7 +398,6 @@ function Details({
                         className="rounded-2xl bg-white p-4 shadow-sm"
                       >
 
-                        {/* Transaction summary */}
                         <div className="flex items-start gap-3">
 
                           <div
@@ -417,15 +410,11 @@ function Details({
 
                             {isIncome ? (
                               <TrendingUp
-                                size={
-                                  21
-                                }
+                                size={21}
                               />
                             ) : (
                               <TrendingDown
-                                size={
-                                  21
-                                }
+                                size={21}
                               />
                             )}
 
@@ -434,20 +423,22 @@ function Details({
                           <div className="min-w-0 flex-1">
 
                             <p className="truncate font-medium text-gray-900">
-
                               {isIncome
                                 ? transaction.crop
-                                : transaction.expenseType}
-
+                                : expenseCategory}
                             </p>
 
                             <p className="mt-1 text-xs text-gray-500">
 
-                              {isIncome
-                                ? transaction.incomeType
-                                : transaction.category}
+                              {isIncome && (
+                                <>
+                                  {
+                                    transaction.incomeType
+                                  }
 
-                              {' · '}
+                                  {' · '}
+                                </>
+                              )}
 
                               {formatDate(
                                 transaction.date
@@ -457,13 +448,7 @@ function Details({
 
                           </div>
 
-                          <p
-                            className={`shrink-0 font-semibold ${
-                              isIncome
-                                ? 'text-gray-900'
-                                : 'text-gray-700'
-                            }`}
-                          >
+                          <p className="shrink-0 font-semibold text-gray-900">
 
                             {isIncome
                               ? '+'
@@ -477,7 +462,6 @@ function Details({
 
                         </div>
 
-                        {/* Sale details */}
                         {hasSaleDetails && (
                           <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
@@ -512,80 +496,64 @@ function Details({
                           </div>
                         )}
 
-                        {/* Manual labour details */}
                         {isLabour &&
-                          (hasMen ||
-                            hasWomen) && (
-                            <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
+                          (
+                            hasMen ||
+                            hasWomen
+                          ) && (
+                          <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
-                              <p className="mb-2 text-xs font-medium text-gray-500">
-                                Labour details
-                              </p>
+                            <p className="mb-2 text-xs font-medium text-gray-500">
+                              Labour details
+                            </p>
 
-                              {hasMen && (
-                                <div className="mb-2 flex items-center justify-between gap-3">
+                            {hasMen && (
+                              <div className="mb-2 flex items-center justify-between gap-3">
 
-                                  <span className="text-sm text-gray-700">
-                                    Men
-                                  </span>
+                                <span className="text-sm text-gray-700">
+                                  Men
+                                </span>
 
-                                  <span className="text-right text-sm font-medium text-gray-900">
+                                <span className="text-right text-sm font-medium text-gray-900">
+                                  {menCount}
+                                  {' × '}
+                                  {formatCurrency(
+                                    menRate
+                                  )}
+                                  {' = '}
+                                  {formatCurrency(
+                                    menTotal
+                                  )}
+                                </span>
 
-                                    {
-                                      menCount
-                                    }
+                              </div>
+                            )}
 
-                                    {' × '}
+                            {hasWomen && (
+                              <div className="flex items-center justify-between gap-3">
 
-                                    {formatCurrency(
-                                      menRate
-                                    )}
+                                <span className="text-sm text-gray-700">
+                                  Women
+                                </span>
 
-                                    {' = '}
+                                <span className="text-right text-sm font-medium text-gray-900">
+                                  {womenCount}
+                                  {' × '}
+                                  {formatCurrency(
+                                    womenRate
+                                  )}
+                                  {' = '}
+                                  {formatCurrency(
+                                    womenTotal
+                                  )}
+                                </span>
 
-                                    {formatCurrency(
-                                      menTotal
-                                    )}
+                              </div>
+                            )}
 
-                                  </span>
+                          </div>
+                        )}
 
-                                </div>
-                              )}
-
-                              {hasWomen && (
-                                <div className="flex items-center justify-between gap-3">
-
-                                  <span className="text-sm text-gray-700">
-                                    Women
-                                  </span>
-
-                                  <span className="text-right text-sm font-medium text-gray-900">
-
-                                    {
-                                      womenCount
-                                    }
-
-                                    {' × '}
-
-                                    {formatCurrency(
-                                      womenRate
-                                    )}
-
-                                    {' = '}
-
-                                    {formatCurrency(
-                                      womenTotal
-                                    )}
-
-                                  </span>
-
-                                </div>
-                              )}
-
-                            </div>
-                          )}
-
-                        {/* Older labour records */}
                         {hasLegacyLabour && (
                           <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
@@ -611,9 +579,9 @@ function Details({
                                 Number(
                                   transaction.numberOfPeople
                                 ) *
-                                  Number(
-                                    transaction.dailyCharge
-                                  )
+                                Number(
+                                  transaction.dailyCharge
+                                )
                               )}
 
                             </p>
@@ -621,7 +589,6 @@ function Details({
                           </div>
                         )}
 
-                        {/* Notes */}
                         {transaction.notes?.trim() && (
                           <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
@@ -638,7 +605,6 @@ function Details({
                           </div>
                         )}
 
-                        {/* Actions */}
                         <div className="mt-4 flex items-center justify-end gap-2 border-t border-gray-100 pt-3">
 
                           <button
@@ -651,9 +617,7 @@ function Details({
                             }
                           >
                             <Pencil
-                              size={
-                                16
-                              }
+                              size={16}
                             />
 
                             Edit
@@ -669,9 +633,7 @@ function Details({
                             }
                           >
                             <Trash2
-                              size={
-                                16
-                              }
+                              size={16}
                             />
 
                             Delete

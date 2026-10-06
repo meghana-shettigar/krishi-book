@@ -30,53 +30,60 @@ import {
   saveFarmLocation,
 } from '../utils/profileStorage'
 
+import {
+  useLanguage,
+} from '../i18n/LanguageContext'
+
 function FarmLocationSetup({
   onSaved,
   onCancel,
-  title = 'Set your farm location',
+  title = '',
   showAccountSwitch = false,
 }) {
+  const {
+    t,
+  } =
+    useLanguage()
+
   const [
     finding,
     setFinding,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     saving,
     setSaving,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     candidate,
     setCandidate,
-  ] = useState(null)
+  ] =
+    useState(null)
 
   const [
     error,
     setError,
-  ] = useState('')
+  ] =
+    useState('')
 
   const findLocation =
     async () => {
       try {
-        setFinding(true)
-        setError('')
-        setCandidate(null)
+        setFinding(
+          true
+        )
 
-        /*
-         * 1. Phone/browser gives
-         * latitude + longitude.
-         */
+        setError('')
+        setCandidate(
+          null
+        )
+
         const coordinates =
           await getCurrentDeviceLocation()
 
-        /*
-         * 2. Convert coordinates
-         * into a simple place name.
-         *
-         * The user never sees the
-         * latitude or longitude.
-         */
         const location =
           await reverseGeocodeFarmLocation(
             coordinates.latitude,
@@ -97,18 +104,25 @@ function FarmLocationSetup({
           'Unable to find your location. Please try again.'
         )
       } finally {
-        setFinding(false)
+        setFinding(
+          false
+        )
       }
     }
 
   const confirmLocation =
     async () => {
-      if (!candidate) {
+      if (
+        !candidate
+      ) {
         return
       }
 
       try {
-        setSaving(true)
+        setSaving(
+          true
+        )
+
         setError('')
 
         const updatedProfile =
@@ -129,7 +143,9 @@ function FarmLocationSetup({
           'Unable to save your farm location. Please try again.'
         )
       } finally {
-        setSaving(false)
+        setSaving(
+          false
+        )
       }
     }
 
@@ -137,21 +153,18 @@ function FarmLocationSetup({
     async () => {
       const confirmed =
         window.confirm(
-          'Use another Krishi Book account on this phone?'
+          t(
+            'Use another Krishi Book account on this phone?'
+          )
         )
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return
       }
 
       try {
-        /*
-         * Clear only temporary
-         * browser/device data.
-         *
-         * Firestore cloud data
-         * remains untouched.
-         */
         clearFarmDeviceCache()
 
         await signOut(
@@ -164,7 +177,9 @@ function FarmLocationSetup({
         )
 
         alert(
-          'Unable to change account. Please try again.'
+          t(
+            'Unable to change account. Please try again.'
+          )
         )
       }
     }
@@ -179,17 +194,24 @@ function FarmLocationSetup({
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#E4EFD9]">
 
             <MapPin
-              size={30}
+              size={
+                30
+              }
             />
 
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900">
-            {title}
+            {title ||
+              t(
+                'Set your farm location'
+              )}
           </h1>
 
           <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-gray-600">
-            Please do this while you are at or near your farm.
+            {t(
+              'Please do this while you are at or near your farm.'
+            )}
           </p>
 
         </div>
@@ -198,11 +220,15 @@ function FarmLocationSetup({
           <section className="rounded-2xl bg-white p-5 shadow-sm">
 
             <p className="text-center text-base font-semibold text-gray-900">
-              Find your farm
+              {t(
+                'Find your farm'
+              )}
             </p>
 
             <p className="mt-2 text-center text-sm leading-6 text-gray-500">
-              Krishi Book will use your phone to find the farm location for weather information.
+              {t(
+                'Krishi Book will use your phone to find the farm location for weather information.'
+              )}
             </p>
 
             <button
@@ -218,18 +244,26 @@ function FarmLocationSetup({
 
               {finding ? (
                 <RefreshCw
-                  size={21}
+                  size={
+                    21
+                  }
                   className="animate-spin"
                 />
               ) : (
                 <LocateFixed
-                  size={21}
+                  size={
+                    21
+                  }
                 />
               )}
 
               {finding
-                ? 'Finding your farm...'
-                : 'Use My Location'}
+                ? t(
+                    'Finding your farm...'
+                  )
+                : t(
+                    'Use My Location'
+                  )}
 
             </button>
 
@@ -237,7 +271,9 @@ function FarmLocationSetup({
               <div className="mt-4 rounded-xl bg-[#FCF2F0] p-4">
 
                 <p className="text-sm leading-5 text-[#8C443B]">
-                  {error}
+                  {t(
+                    error
+                  )}
                 </p>
 
               </div>
@@ -251,7 +287,9 @@ function FarmLocationSetup({
                 }
                 className="mt-3 w-full px-4 py-3 text-sm font-semibold text-gray-500"
               >
-                Cancel
+                {t(
+                  'Cancel'
+                )}
               </button>
             )}
 
@@ -260,7 +298,9 @@ function FarmLocationSetup({
           <section className="rounded-2xl bg-white p-5 shadow-sm">
 
             <p className="text-sm font-medium text-gray-500">
-              We found:
+              {t(
+                'We found:'
+              )}
             </p>
 
             <div className="mt-3 flex items-center gap-3 rounded-2xl bg-[#F3F7EF] p-4">
@@ -268,7 +308,9 @@ function FarmLocationSetup({
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white">
 
                 <MapPin
-                  size={22}
+                  size={
+                    22
+                  }
                 />
 
               </div>
@@ -283,7 +325,9 @@ function FarmLocationSetup({
             </div>
 
             <p className="mt-5 text-center text-base font-semibold text-gray-900">
-              Is this your farm?
+              {t(
+                'Is this your farm?'
+              )}
             </p>
 
             <button
@@ -298,12 +342,18 @@ function FarmLocationSetup({
             >
 
               <Check
-                size={21}
+                size={
+                  21
+                }
               />
 
               {saving
-                ? 'Saving...'
-                : 'Yes, Save'}
+                ? t(
+                    'Saving...'
+                  )
+                : t(
+                    'Yes, Save'
+                  )}
 
             </button>
 
@@ -318,7 +368,9 @@ function FarmLocationSetup({
               }
               className="mt-3 w-full rounded-2xl border border-gray-200 bg-white px-5 py-4 text-base font-semibold text-gray-700 disabled:opacity-50"
             >
-              Try Again
+              {t(
+                'Try Again'
+              )}
             </button>
 
             {onCancel && (
@@ -332,7 +384,9 @@ function FarmLocationSetup({
                 }
                 className="mt-2 w-full px-4 py-3 text-sm font-semibold text-gray-500"
               >
-                Cancel
+                {t(
+                  'Cancel'
+                )}
               </button>
             )}
 
@@ -343,16 +397,18 @@ function FarmLocationSetup({
           <section className="mt-6 border-t border-gray-200 pt-5">
 
             <p className="text-center text-xs text-gray-400">
-              Signed in as
+              {t(
+                'Signed in as'
+              )}
             </p>
 
             <p className="mt-1 truncate text-center text-sm font-medium text-gray-600">
-              {
-                auth
-                  .currentUser
-                  ?.email ||
-                'Krishi Book user'
-              }
+              {auth
+                .currentUser
+                ?.email ||
+                t(
+                  'Krishi Book user'
+                )}
             </p>
 
             <button
@@ -362,14 +418,18 @@ function FarmLocationSetup({
               }
               className="mt-3 w-full rounded-xl px-4 py-3 text-sm font-semibold text-gray-600"
             >
-              Use Another Account
+              {t(
+                'Use Another Account'
+              )}
             </button>
 
           </section>
         )}
 
         <p className="mt-5 text-center text-xs text-gray-400">
-          Place names provided using OpenStreetMap data
+          {t(
+            'Place names provided using OpenStreetMap data'
+          )}
         </p>
 
       </main>

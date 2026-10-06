@@ -14,32 +14,48 @@ import {
   getWeatherBarSummary,
 } from '../utils/weather'
 
+import {
+  useLanguage,
+} from '../i18n/LanguageContext'
+
 function WeatherBar({
   onOpen,
   farmLocation,
 }) {
+  const {
+    t,
+    generatedText,
+  } =
+    useLanguage()
+
   const [
     weather,
     setWeather,
-  ] = useState(null)
+  ] =
+    useState(null)
 
   const [
     loading,
     setLoading,
-  ] = useState(true)
+  ] =
+    useState(true)
 
   const [
     error,
     setError,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled =
+      false
 
     const loadWeather =
       async () => {
         try {
-          setLoading(true)
+          setLoading(
+            true
+          )
 
           const result =
             await getFarmWeather({
@@ -47,12 +63,16 @@ function WeatherBar({
                 farmLocation,
             })
 
-          if (!cancelled) {
+          if (
+            !cancelled
+          ) {
             setWeather(
               result
             )
 
-            setError(false)
+            setError(
+              false
+            )
           }
         } catch (loadError) {
           console.error(
@@ -60,12 +80,20 @@ function WeatherBar({
             loadError
           )
 
-          if (!cancelled) {
-            setError(true)
+          if (
+            !cancelled
+          ) {
+            setError(
+              true
+            )
           }
         } finally {
-          if (!cancelled) {
-            setLoading(false)
+          if (
+            !cancelled
+          ) {
+            setLoading(
+              false
+            )
           }
         }
       }
@@ -73,7 +101,8 @@ function WeatherBar({
     loadWeather()
 
     return () => {
-      cancelled = true
+      cancelled =
+        true
     }
   }, [
     farmLocation?.latitude,
@@ -81,44 +110,52 @@ function WeatherBar({
   ])
 
   const placeName =
-    farmLocation?.placeName ||
-    'Farm location'
+    farmLocation
+      ?.placeName ||
+    t(
+      'Farm location'
+    )
 
-  if (loading) {
+  if (
+    loading
+  ) {
     return (
       <button
         type="button"
         onClick={
           onOpen
         }
-        className="mb-6 flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm transition active:scale-[0.99]"
+        className="mb-6 flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm"
       >
 
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EEF3E8]">
-
-          <WeatherIcon
-            kind="partly-cloudy"
-            size={25}
-            className="text-gray-600"
-          />
-
-        </div>
+        <WeatherIcon
+          kind="partly-cloudy"
+          size={
+            25
+          }
+          className="text-gray-600"
+        />
 
         <div className="min-w-0 flex-1">
 
-          <p className="truncate text-xs font-medium text-gray-500">
-            {placeName}
+          <p className="truncate text-xs text-gray-500">
+            {
+              placeName
+            }
           </p>
 
-          <p className="mt-1 text-sm font-semibold text-gray-900">
-            Checking farm weather...
+          <p className="mt-1 text-sm font-semibold">
+            {t(
+              'Checking farm weather...'
+            )}
           </p>
 
         </div>
 
         <ChevronRight
-          size={19}
-          className="shrink-0 text-gray-400"
+          size={
+            19
+          }
         />
 
       </button>
@@ -135,38 +172,42 @@ function WeatherBar({
         onClick={
           onOpen
         }
-        className="mb-6 flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm transition active:scale-[0.99]"
+        className="mb-6 flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm"
       >
 
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EEF3E8]">
-
-          <WeatherIcon
-            kind="cloudy"
-            size={25}
-            className="text-gray-600"
-          />
-
-        </div>
+        <WeatherIcon
+          kind="cloudy"
+          size={
+            25
+          }
+        />
 
         <div className="min-w-0 flex-1">
 
-          <p className="truncate text-xs font-medium text-gray-500">
-            {placeName}
+          <p className="truncate text-xs text-gray-500">
+            {
+              placeName
+            }
           </p>
 
-          <p className="mt-1 text-sm font-semibold text-gray-900">
-            Weather unavailable
+          <p className="mt-1 text-sm font-semibold">
+            {t(
+              'Weather unavailable'
+            )}
           </p>
 
-          <p className="mt-0.5 text-xs text-gray-500">
-            Tap to try again
+          <p className="text-xs text-gray-500">
+            {t(
+              'Tap to try again'
+            )}
           </p>
 
         </div>
 
         <ChevronRight
-          size={19}
-          className="shrink-0 text-gray-400"
+          size={
+            19
+          }
         />
 
       </button>
@@ -184,10 +225,10 @@ function WeatherBar({
       onClick={
         onOpen
       }
-      className="mb-6 flex w-full items-center gap-4 rounded-2xl border border-[#E2E8DC] bg-[#F3F7EF] p-4 text-left shadow-sm transition active:scale-[0.99]"
+      className="mb-6 flex w-full items-center gap-4 rounded-2xl border border-[#E2E8DC] bg-[#F3F7EF] p-4 text-left shadow-sm"
     >
 
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white">
 
         <WeatherIcon
           kind={
@@ -195,15 +236,16 @@ function WeatherBar({
               .descriptor
               .kind
           }
-          size={27}
-          className="text-gray-800"
+          size={
+            27
+          }
         />
 
       </div>
 
       <div className="min-w-0 flex-1">
 
-        <p className="truncate text-xs font-medium text-gray-500">
+        <p className="truncate text-xs text-gray-500">
           {
             weather
               .location
@@ -211,25 +253,44 @@ function WeatherBar({
           }
         </p>
 
-        <p className="mt-0.5 text-base font-semibold text-gray-900">
-          {summary.title}
+        <p className="mt-0.5 text-base font-semibold">
+
+          {generatedText(
+            summary
+              .descriptor
+              .label
+          )}
+
+          {' · '}
+
+          {
+            summary
+              .temperature
+          }
+          °C
+
         </p>
 
         <p className="mt-0.5 truncate text-xs text-gray-600">
 
           {weather.isStale
-            ? 'Last saved forecast · '
+            ? t(
+                'Last saved forecast · '
+              )
             : ''}
 
-          {summary.detail}
+          {generatedText(
+            summary.detail
+          )}
 
         </p>
 
       </div>
 
       <ChevronRight
-        size={20}
-        className="shrink-0 text-gray-400"
+        size={
+          20
+        }
       />
 
     </button>

@@ -25,73 +25,100 @@ import {
   ensureUserProfile,
 } from '../utils/profileStorage'
 
-function getFriendlyAuthError(
-  error
-) {
-  switch (error?.code) {
-    case 'auth/email-already-in-use':
-      return 'An account already exists with this email.'
-
-    case 'auth/invalid-email':
-      return 'Please enter a valid email address.'
-
-    case 'auth/weak-password':
-      return 'Please choose a password with at least 6 characters.'
-
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
-    case 'auth/user-not-found':
-      return 'The email or password is incorrect.'
-
-    case 'auth/too-many-requests':
-      return 'Too many attempts. Please wait a little and try again.'
-
-    default:
-      return 'Something went wrong. Please try again.'
-  }
-}
+import {
+  useLanguage,
+} from '../i18n/LanguageContext'
 
 function Login() {
+  const {
+    language,
+    t,
+  } =
+    useLanguage()
+
   const [
     mode,
     setMode,
-  ] = useState(
-    'signin'
-  )
+  ] =
+    useState(
+      'signin'
+    )
 
   const [
     name,
     setName,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     email,
     setEmail,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     password,
     setPassword,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     confirmPassword,
     setConfirmPassword,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     loading,
     setLoading,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     error,
     setError,
-  ] = useState('')
+  ] =
+    useState('')
 
-  const resetFormMessages =
-    () => {
-      setError('')
+  const getFriendlyAuthError =
+    (
+      authError
+    ) => {
+      switch (
+        authError?.code
+      ) {
+        case 'auth/email-already-in-use':
+          return t(
+            'An account already exists with this email.'
+          )
+
+        case 'auth/invalid-email':
+          return t(
+            'Please enter a valid email address.'
+          )
+
+        case 'auth/weak-password':
+          return t(
+            'Please choose a password with at least 6 characters.'
+          )
+
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+        case 'auth/user-not-found':
+          return t(
+            'The email or password is incorrect.'
+          )
+
+        case 'auth/too-many-requests':
+          return t(
+            'Too many attempts. Please wait a little and try again.'
+          )
+
+        default:
+          return t(
+            'Something went wrong. Please try again.'
+          )
+      }
     }
 
   const handleLogin =
@@ -101,14 +128,19 @@ function Login() {
         !password
       ) {
         setError(
-          'Please enter your email and password.'
+          t(
+            'Please enter your email and password.'
+          )
         )
 
         return
       }
 
       try {
-        setLoading(true)
+        setLoading(
+          true
+        )
+
         setError('')
 
         await signInWithEmailAndPassword(
@@ -128,33 +160,46 @@ function Login() {
           )
         )
       } finally {
-        setLoading(false)
+        setLoading(
+          false
+        )
       }
     }
 
   const handleCreateAccount =
     async () => {
-      if (!name.trim()) {
+      if (
+        !name.trim()
+      ) {
         setError(
-          'Please enter your name.'
-        )
-
-        return
-      }
-
-      if (!email.trim()) {
-        setError(
-          'Please enter your email.'
+          t(
+            'Please enter your name.'
+          )
         )
 
         return
       }
 
       if (
-        password.length < 6
+        !email.trim()
       ) {
         setError(
-          'Please choose a password with at least 6 characters.'
+          t(
+            'Please enter your email.'
+          )
+        )
+
+        return
+      }
+
+      if (
+        password.length <
+        6
+      ) {
+        setError(
+          t(
+            'Please choose a password with at least 6 characters.'
+          )
         )
 
         return
@@ -165,14 +210,19 @@ function Login() {
         confirmPassword
       ) {
         setError(
-          'The two passwords do not match.'
+          t(
+            'The two passwords do not match.'
+          )
         )
 
         return
       }
 
       try {
-        setLoading(true)
+        setLoading(
+          true
+        )
+
         setError('')
 
         const credential =
@@ -187,16 +237,10 @@ function Login() {
           {
             name:
               name.trim(),
+
+            language,
           }
         )
-
-        /*
-         * Firebase signs the new user
-         * in automatically.
-         *
-         * App.jsx will now show the
-         * farm-location setup.
-         */
       } catch (createError) {
         console.error(
           'Account creation failed:',
@@ -209,22 +253,31 @@ function Login() {
           )
         )
       } finally {
-        setLoading(false)
+        setLoading(
+          false
+        )
       }
     }
 
   const handlePasswordReset =
     async () => {
-      if (!email.trim()) {
+      if (
+        !email.trim()
+      ) {
         setError(
-          'Please enter your email address.'
+          t(
+            'Please enter your email address.'
+          )
         )
 
         return
       }
 
       try {
-        setLoading(true)
+        setLoading(
+          true
+        )
+
         setError('')
 
         await sendPasswordResetEmail(
@@ -233,7 +286,9 @@ function Login() {
         )
 
         alert(
-          'Password reset email sent. Please check your email.'
+          t(
+            'Password reset email sent. Please check your email.'
+          )
         )
 
         setMode(
@@ -251,15 +306,15 @@ function Login() {
           )
         )
       } finally {
-        setLoading(false)
+        setLoading(
+          false
+        )
       }
     }
 
-  /*
-   * Password reset screen
-   */
   if (
-    mode === 'reset'
+    mode ===
+    'reset'
   ) {
     return (
       <div className="min-h-screen bg-[#F7F5EF]">
@@ -269,18 +324,25 @@ function Login() {
           <button
             type="button"
             onClick={() => {
-              resetFormMessages()
+              setError('')
+
               setMode(
                 'signin'
               )
             }}
             className="mb-6 flex w-fit items-center gap-2 text-sm font-semibold text-gray-600"
           >
+
             <ArrowLeft
-              size={18}
+              size={
+                18
+              }
             />
 
-            Back
+            {t(
+              'Back'
+            )}
+
           </button>
 
           <div className="mb-7 text-center">
@@ -288,17 +350,23 @@ function Login() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#E4EFD9]">
 
               <KeyRound
-                size={30}
+                size={
+                  30
+                }
               />
 
             </div>
 
             <h1 className="text-2xl font-bold text-gray-900">
-              Forgot password?
+              {t(
+                'Forgot password?'
+              )}
             </h1>
 
             <p className="mt-2 text-sm leading-5 text-gray-500">
-              Enter your email and we will send you a link to choose a new password.
+              {t(
+                'Enter your email and we will send you a link to choose a new password.'
+              )}
             </p>
 
           </div>
@@ -309,17 +377,25 @@ function Login() {
               htmlFor="resetEmail"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              Email
+              {t(
+                'Email'
+              )}
             </label>
 
             <input
               id="resetEmail"
               type="email"
               autoComplete="email"
-              value={email}
-              onChange={(event) =>
+              value={
+                email
+              }
+              onChange={(
+                event
+              ) =>
                 setEmail(
-                  event.target.value
+                  event
+                    .target
+                    .value
                 )
               }
               className="w-full rounded-xl border border-gray-200 px-4 py-4 text-base outline-none"
@@ -327,7 +403,9 @@ function Login() {
 
             {error && (
               <p className="mt-3 text-sm text-red-600">
-                {error}
+                {
+                  error
+                }
               </p>
             )}
 
@@ -341,13 +419,21 @@ function Login() {
               }
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white disabled:opacity-50"
             >
+
               <Mail
-                size={20}
+                size={
+                  20
+                }
               />
 
               {loading
-                ? 'Sending...'
-                : 'Send Reset Email'}
+                ? t(
+                    'Sending...'
+                  )
+                : t(
+                    'Send Reset Email'
+                  )}
+
             </button>
 
           </section>
@@ -368,28 +454,34 @@ function Login() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#E4EFD9]">
 
             <Sprout
-              size={32}
+              size={
+                32
+              }
             />
 
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900">
-            Krishi Book
+            {t(
+              'Krishi Book'
+            )}
           </h1>
 
           <p className="mt-2 text-sm text-gray-500">
-            Your simple farm companion
+            {t(
+              'Your simple farm companion'
+            )}
           </p>
 
         </div>
 
-        {/* Sign in / Create account */}
         <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-white p-1.5 shadow-sm">
 
           <button
             type="button"
             onClick={() => {
               setError('')
+
               setMode(
                 'signin'
               )
@@ -401,13 +493,16 @@ function Login() {
                 : 'text-gray-500'
             }`}
           >
-            Sign In
+            {t(
+              'Sign In'
+            )}
           </button>
 
           <button
             type="button"
             onClick={() => {
               setError('')
+
               setMode(
                 'create'
               )
@@ -419,7 +514,9 @@ function Login() {
                 : 'text-gray-500'
             }`}
           >
-            Create Account
+            {t(
+              'Create Account'
+            )}
           </button>
 
         </div>
@@ -434,7 +531,9 @@ function Login() {
                 htmlFor="name"
                 className="mb-2 block text-sm font-medium text-gray-600"
               >
-                Your name
+                {t(
+                  'Your name'
+                )}
               </label>
 
               <input
@@ -444,7 +543,9 @@ function Login() {
                 value={
                   name
                 }
-                onChange={(event) =>
+                onChange={(
+                  event
+                ) =>
                   setName(
                     event
                       .target
@@ -463,7 +564,9 @@ function Login() {
               htmlFor="email"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              Email
+              {t(
+                'Email'
+              )}
             </label>
 
             <input
@@ -473,7 +576,9 @@ function Login() {
               value={
                 email
               }
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setEmail(
                   event
                     .target
@@ -498,7 +603,9 @@ function Login() {
               htmlFor="password"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              Password
+              {t(
+                'Password'
+              )}
             </label>
 
             <input
@@ -513,14 +620,18 @@ function Login() {
               value={
                 password
               }
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setPassword(
                   event
                     .target
                     .value
                 )
               }
-              onKeyDown={(event) => {
+              onKeyDown={(
+                event
+              ) => {
                 if (
                   event.key ===
                     'Enter' &&
@@ -536,7 +647,9 @@ function Login() {
             {mode ===
               'create' && (
               <p className="mt-1 text-xs text-gray-400">
-                At least 6 characters
+                {t(
+                  'At least 6 characters'
+                )}
               </p>
             )}
 
@@ -550,7 +663,9 @@ function Login() {
                 htmlFor="confirmPassword"
                 className="mb-2 block text-sm font-medium text-gray-600"
               >
-                Confirm password
+                {t(
+                  'Confirm password'
+                )}
               </label>
 
               <input
@@ -560,7 +675,9 @@ function Login() {
                 value={
                   confirmPassword
                 }
-                onChange={(event) =>
+                onChange={(
+                  event
+                ) =>
                   setConfirmPassword(
                     event
                       .target
@@ -577,7 +694,9 @@ function Login() {
             <div className="mb-4 rounded-xl bg-[#FCF2F0] p-3">
 
               <p className="text-sm text-red-700">
-                {error}
+                {
+                  error
+                }
               </p>
 
             </div>
@@ -598,12 +717,18 @@ function Login() {
               >
 
                 <LogIn
-                  size={20}
+                  size={
+                    20
+                  }
                 />
 
                 {loading
-                  ? 'Signing in...'
-                  : 'Sign In'}
+                  ? t(
+                      'Signing in...'
+                    )
+                  : t(
+                      'Sign In'
+                    )}
 
               </button>
 
@@ -611,13 +736,16 @@ function Login() {
                 type="button"
                 onClick={() => {
                   setError('')
+
                   setMode(
                     'reset'
                   )
                 }}
                 className="mt-3 w-full px-4 py-3 text-sm font-semibold text-gray-500"
               >
-                Forgot password?
+                {t(
+                  'Forgot password?'
+                )}
               </button>
             </>
           ) : (
@@ -633,12 +761,18 @@ function Login() {
             >
 
               <UserPlus
-                size={20}
+                size={
+                  20
+                }
               />
 
               {loading
-                ? 'Creating account...'
-                : 'Create Account'}
+                ? t(
+                    'Creating account...'
+                  )
+                : t(
+                    'Create Account'
+                  )}
 
             </button>
           )}
@@ -646,7 +780,9 @@ function Login() {
         </section>
 
         <p className="mt-6 text-center text-xs leading-5 text-gray-400">
-          Krishi Book keeps you signed in on this phone until you log out.
+          {t(
+            'Krishi Book keeps you signed in on this phone until you log out.'
+          )}
         </p>
 
       </main>

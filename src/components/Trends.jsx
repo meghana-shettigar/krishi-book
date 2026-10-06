@@ -28,6 +28,10 @@ import {
   getSearchSuggestion,
 } from '../utils/transactionSearch'
 
+import {
+  mapExpenseToV3,
+} from '../data/expenseCategories'
+
 function Trends({
   period,
   setPeriod,
@@ -37,13 +41,22 @@ function Trends({
   setCustomTo,
   onBack,
 }) {
-  const [trendScreen, setTrendScreen] =
+  const [
+    trendScreen,
+    setTrendScreen,
+  ] =
     useState('menu')
 
-  const [activeTab, setActiveTab] =
+  const [
+    activeTab,
+    setActiveTab,
+  ] =
     useState('expense')
 
-  const [searchQuery, setSearchQuery] =
+  const [
+    searchQuery,
+    setSearchQuery,
+  ] =
     useState('')
 
   const transactions =
@@ -93,7 +106,7 @@ function Trends({
     }
 
   /*
-   * Filter first by selected period
+   * Filter first by selected period.
    */
   const filteredTransactions =
     period === 'custom'
@@ -128,13 +141,8 @@ function Trends({
         )
 
   /*
-   * Search across BOTH expense
-   * and income transactions.
-   *
-   * This happens before the tabs
-   * are applied so the same search
-   * remains active when switching
-   * between Expense and Income.
+   * Search across both expense
+   * and income records.
    */
   const searchedTransactions =
     filteredTransactions.filter(
@@ -146,7 +154,7 @@ function Trends({
     )
 
   /*
-   * Now apply the Expense / Income tab
+   * Apply Expense / Income tab.
    */
   const visibleTransactions =
     searchedTransactions
@@ -161,10 +169,6 @@ function Trends({
           new Date(a.date)
       )
 
-  /*
-   * Total for the currently visible
-   * search results and selected tab.
-   */
   const visibleTotal =
     visibleTransactions.reduce(
       (total, transaction) =>
@@ -175,11 +179,6 @@ function Trends({
       0
     )
 
-  /*
-   * Suggestions use ALL historical
-   * transactions, not only the
-   * currently selected period.
-   */
   const searchSuggestion =
     getSearchSuggestion(
       searchQuery,
@@ -205,9 +204,6 @@ function Trends({
 
   /*
    * Trends landing page
-   *
-   * We can add additional
-   * visualisation cards here later.
    */
   if (trendScreen === 'menu') {
     return (
@@ -215,7 +211,6 @@ function Trends({
 
         <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-          {/* Header */}
           <header className="mb-8 flex items-center gap-3">
 
             <button
@@ -223,7 +218,9 @@ function Trends({
               onClick={onBack}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft
+                size={20}
+              />
             </button>
 
             <div>
@@ -240,24 +237,26 @@ function Trends({
 
           </header>
 
-          {/* Visualisations */}
           <section>
 
             <p className="mb-3 text-sm font-medium text-gray-600">
               Choose a view
             </p>
 
-            {/* List View */}
             <button
               type="button"
               onClick={() =>
-                setTrendScreen('list')
+                setTrendScreen(
+                  'list'
+                )
               }
               className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
             >
 
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E8E8F5]">
-                <ListIcon size={25} />
+                <ListIcon
+                  size={25}
+                />
               </div>
 
               <div className="min-w-0 flex-1">
@@ -303,17 +302,20 @@ function Trends({
 
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-        {/* Header */}
         <header className="mb-8 flex items-center gap-3">
 
           <button
             type="button"
             onClick={() =>
-              setTrendScreen('menu')
+              setTrendScreen(
+                'menu'
+              )
             }
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft
+              size={20}
+            />
           </button>
 
           <div>
@@ -330,7 +332,6 @@ function Trends({
 
         </header>
 
-        {/* Period Selector */}
         <section className="mb-4">
 
           <label
@@ -378,7 +379,6 @@ function Trends({
 
           </div>
 
-          {/* Exact dates */}
           <p className="mt-2 px-1 text-sm text-gray-500">
             {getPeriodDateLabel(
               period,
@@ -389,7 +389,6 @@ function Trends({
 
         </section>
 
-        {/* Custom Date Range */}
         {period === 'custom' && (
           <section className="mb-5 w-full min-w-0 overflow-hidden rounded-2xl bg-white p-5 shadow-sm">
 
@@ -413,7 +412,6 @@ function Trends({
 
             <div className="min-w-0 space-y-4">
 
-              {/* From */}
               <div className="min-w-0">
 
                 <label
@@ -441,7 +439,6 @@ function Trends({
 
               </div>
 
-              {/* To */}
               <div className="min-w-0">
 
                 <label
@@ -474,14 +471,12 @@ function Trends({
           </section>
         )}
 
-        {/* Search */}
         <TransactionSearch
           query={searchQuery}
           onChange={setSearchQuery}
           suggestion={searchSuggestion}
         />
 
-        {/* Expense / Income Tabs */}
         <section className="mb-5 rounded-2xl bg-white p-1.5 shadow-sm">
 
           <div className="grid grid-cols-2 gap-1">
@@ -494,7 +489,8 @@ function Trends({
                 )
               }
               className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                activeTab === 'expense'
+                activeTab ===
+                'expense'
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-500'
               }`}
@@ -510,7 +506,8 @@ function Trends({
                 )
               }
               className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                activeTab === 'income'
+                activeTab ===
+                'income'
                   ? 'bg-gray-900 text-white'
                   : 'text-gray-500'
               }`}
@@ -522,7 +519,6 @@ function Trends({
 
         </section>
 
-        {/* List Summary */}
         <section className="mb-4">
 
           <div className="flex items-end justify-between gap-3">
@@ -530,25 +526,32 @@ function Trends({
             <div>
 
               <p className="text-lg font-semibold text-gray-900">
-                {activeTab === 'expense'
+                {activeTab ===
+                'expense'
                   ? 'Expenses'
                   : 'Income'}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">
+
                 {
                   visibleTransactions.length
                 }{' '}
+
                 record
-                {visibleTransactions.length === 1
+                {visibleTransactions.length ===
+                1
                   ? ''
                   : 's'}
+
                 {' · '}
+
                 {
                   periodLabels[
                     period
                   ]
                 }
+
               </p>
 
             </div>
@@ -563,15 +566,16 @@ function Trends({
 
         </section>
 
-        {/* Transactions */}
-        {visibleTransactions.length === 0 ? (
+        {visibleTransactions.length ===
+        0 ? (
           <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
 
             <p className="text-sm font-medium text-gray-700">
 
               {searchQuery
                 ? 'No matching records found'
-                : activeTab === 'expense'
+                : activeTab ===
+                    'expense'
                   ? 'No expenses found'
                   : 'No income found'}
 
@@ -590,20 +594,36 @@ function Trends({
           <section className="space-y-3">
 
             {visibleTransactions.map(
-              (transaction) => {
-
+              (
+                transaction
+              ) => {
                 const isIncome =
                   transaction.type ===
                   'income'
 
+                /*
+                 * Convert old expense
+                 * records to the final
+                 * V3 category for display.
+                 */
+                const mappedExpense =
+                  !isIncome
+                    ? mapExpenseToV3(
+                        transaction.category,
+                        transaction.expenseType
+                      )
+                    : null
+
+                const expenseCategory =
+                  mappedExpense
+                    ?.category ||
+                  transaction.category
+
                 const isLabour =
-  !isIncome &&
-  (
-    transaction.category ===
-      'Labour' ||
-    transaction.category ===
-      'Manual Labour'
-  )
+                  !isIncome &&
+                  expenseCategory ===
+                    'Labour'
+
                 const hasSaleDetails =
                   isIncome &&
                   transaction.quantity !=
@@ -653,7 +673,8 @@ function Trends({
                   )
 
                 const menTotal =
-                  menCount * menRate
+                  menCount *
+                  menRate
 
                 const womenTotal =
                   womenCount *
@@ -667,7 +688,6 @@ function Trends({
                     className="rounded-2xl bg-white p-4 shadow-sm"
                   >
 
-                    {/* Main transaction row */}
                     <div className="flex items-start gap-3">
 
                       <div
@@ -696,17 +716,21 @@ function Trends({
 
                           {isIncome
                             ? transaction.crop
-                            : transaction.expenseType}
+                            : expenseCategory}
 
                         </p>
 
                         <p className="mt-1 text-xs text-gray-500">
 
-                          {isIncome
-                            ? transaction.incomeType
-                            : transaction.category}
+                          {isIncome && (
+                            <>
+                              {
+                                transaction.incomeType
+                              }
 
-                          {' · '}
+                              {' · '}
+                            </>
+                          )}
 
                           {formatDate(
                             transaction.date
@@ -736,7 +760,6 @@ function Trends({
 
                     </div>
 
-                    {/* Income sale details */}
                     {hasSaleDetails && (
                       <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
@@ -773,7 +796,6 @@ function Trends({
                       </div>
                     )}
 
-                    {/* New Manual Labour details */}
                     {hasNewLabourDetails && (
                       <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
@@ -781,7 +803,8 @@ function Trends({
                           Labour details
                         </p>
 
-                        {menCount > 0 && (
+                        {menCount >
+                          0 && (
                           <div className="mb-2 flex items-center justify-between gap-3">
 
                             <span className="text-sm text-gray-700">
@@ -809,7 +832,8 @@ function Trends({
                           </div>
                         )}
 
-                        {womenCount > 0 && (
+                        {womenCount >
+                          0 && (
                           <div className="flex items-center justify-between gap-3">
 
                             <span className="text-sm text-gray-700">
@@ -840,7 +864,6 @@ function Trends({
                       </div>
                     )}
 
-                    {/* Older Manual Labour records */}
                     {hasLegacyLabourDetails && (
                       <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 
@@ -878,7 +901,6 @@ function Trends({
                       </div>
                     )}
 
-                    {/* Notes */}
                     {transaction.notes?.trim() && (
                       <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
 

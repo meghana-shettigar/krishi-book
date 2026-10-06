@@ -1,10 +1,31 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import {
+  StrictMode,
+} from 'react'
+
+import {
+  createRoot,
+} from 'react-dom/client'
+
 import './index.css'
+
 import App from './App.jsx'
 
-createRoot(document.getElementById('root')).render(
+import {
+  LanguageProvider,
+} from './i18n/LanguageContext'
+
+createRoot(
+  document.getElementById(
+    'root'
+  )
+).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
+
+    <LanguageProvider>
+
+      <App />
+
+    </LanguageProvider>
+
+  </StrictMode>
 )

@@ -44,93 +44,125 @@ import {
   savePublicContact,
 } from '../utils/publicContactsStorage'
 
+import {
+  getContactCategorySearchTerms,
+  isLatinContactName,
+} from '../i18n/translations'
+
+import {
+  useLanguage,
+} from '../i18n/LanguageContext'
+
 function Contacts({
   onBack,
 }) {
+  const {
+    t,
+    contactCategoryLabel,
+    contactCategoryDescription,
+  } =
+    useLanguage()
+
   const [
     screen,
     setScreen,
-  ] = useState('list')
+  ] =
+    useState(
+      'list'
+    )
 
   const [
     directoryView,
     setDirectoryView,
-  ] = useState('mine')
+  ] =
+    useState(
+      'mine'
+    )
 
   const [
     editingContact,
     setEditingContact,
-  ] = useState(null)
+  ] =
+    useState(null)
 
   const [
     searchQuery,
     setSearchQuery,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     dataVersion,
     setDataVersion,
-  ] = useState(0)
+  ] =
+    useState(0)
 
   const [
     farmLocation,
     setFarmLocation,
-  ] = useState(null)
+  ] =
+    useState(null)
 
   const [
     nearbyContacts,
     setNearbyContacts,
-  ] = useState([])
+  ] =
+    useState([])
 
   const [
     nearbyLoading,
     setNearbyLoading,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     nearbyLoaded,
     setNearbyLoaded,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     nearbyError,
     setNearbyError,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     savingContact,
     setSavingContact,
-  ] = useState(false)
+  ] =
+    useState(false)
 
   const [
     name,
     setName,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     phone,
     setPhone,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     roleId,
     setRoleId,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     notes,
     setNotes,
-  ] = useState('')
+  ] =
+    useState('')
 
   const [
     makePublic,
     setMakePublic,
-  ] = useState(false)
+  ] =
+    useState(false)
 
-  /*
-   * Load private contacts and
-   * the user's CURRENT farm.
-   */
   useEffect(() => {
     let unsubscribe =
       () => {}
@@ -156,19 +188,20 @@ function Contacts({
             (
               version
             ) =>
-              version + 1
+              version +
+              1
           )
 
           unsubscribe =
             subscribeToCloudContacts(
-              () => {
+              () =>
                 setDataVersion(
                   (
                     version
                   ) =>
-                    version + 1
+                    version +
+                    1
                 )
-              }
             )
         } catch (error) {
           console.error(
@@ -190,12 +223,6 @@ function Contacts({
   const contacts =
     getContacts()
 
-  /*
-   * --------------------------------
-   * MY CONTACTS SEARCH
-   * --------------------------------
-   */
-
   const visibleContacts =
     useMemo(() => {
       const query =
@@ -208,7 +235,9 @@ function Contacts({
           (
             contact
           ) => {
-            if (!query) {
+            if (
+              !query
+            ) {
               return true
             }
 
@@ -223,6 +252,10 @@ function Contacts({
 
               category.label,
               category.description,
+
+              ...getContactCategorySearchTerms(
+                contact.roleId
+              ),
 
               category
                 .ledgerDefaults
@@ -250,11 +283,8 @@ function Contacts({
               .join(' ')
               .toLowerCase()
 
-            return (
-              searchableText
-                .includes(
-                  query
-                )
+            return searchableText.includes(
+              query
             )
           }
         )
@@ -277,12 +307,6 @@ function Contacts({
       searchQuery,
     ])
 
-  /*
-   * --------------------------------
-   * NEARBY CONTACT SEARCH
-   * --------------------------------
-   */
-
   const visibleNearbyContacts =
     useMemo(() => {
       const query =
@@ -290,7 +314,9 @@ function Contacts({
           .trim()
           .toLowerCase()
 
-      if (!query) {
+      if (
+        !query
+      ) {
         return nearbyContacts
       }
 
@@ -298,17 +324,13 @@ function Contacts({
         (
           contact
         ) => {
-          const category =
-            getContactCategory(
-              contact.roleId
-            )
-
           const searchableText = [
             contact.name,
             contact.phone,
 
-            category.label,
-            category.description,
+            ...getContactCategorySearchTerms(
+              contact.roleId
+            ),
 
             contact
               .serviceArea
@@ -318,11 +340,8 @@ function Contacts({
             .join(' ')
             .toLowerCase()
 
-          return (
-            searchableText
-              .includes(
-                query
-              )
+          return searchableText.includes(
+            query
           )
         }
       )
@@ -331,20 +350,15 @@ function Contacts({
       searchQuery,
     ])
 
-  /*
-   * --------------------------------
-   * FORM
-   * --------------------------------
-   */
-
   const clearForm =
     () => {
       setName('')
       setPhone('')
       setRoleId('')
       setNotes('')
-      setMakePublic(false)
-
+      setMakePublic(
+        false
+      )
       setEditingContact(
         null
       )
@@ -353,7 +367,10 @@ function Contacts({
   const openAddContact =
     () => {
       clearForm()
-      setScreen('form')
+
+      setScreen(
+        'form'
+      )
     }
 
   const openEditContact =
@@ -384,45 +401,30 @@ function Contacts({
         ''
       )
 
-      /*
-       * Old Krishi Book contacts
-       * may already have the old
-       * makePublic preference.
-       *
-       * We do NOT automatically
-       * treat that old preference
-       * as consent for the new
-       * public directory.
-       *
-       * Only contacts that have
-       * actually been published
-       * through this new system
-       * open with sharing enabled.
-       */
       setMakePublic(
         Boolean(
           contact
             .publicDirectorySharedAt
         ) &&
         Boolean(
-          contact.makePublic
+          contact
+            .makePublic
         )
       )
 
-      setScreen('form')
+      setScreen(
+        'form'
+      )
     }
 
   const closeForm =
     () => {
       clearForm()
-      setScreen('list')
-    }
 
-  /*
-   * --------------------------------
-   * LOAD NEARBY CONTACTS
-   * --------------------------------
-   */
+      setScreen(
+        'list'
+      )
+    }
 
   const loadNearbyContacts =
     async () => {
@@ -489,47 +491,66 @@ function Contacts({
 
       setSearchQuery('')
 
-      if (!nearbyLoaded) {
+      if (
+        !nearbyLoaded
+      ) {
         await loadNearbyContacts()
       }
     }
 
-  /*
-   * --------------------------------
-   * SAVE
-   * --------------------------------
-   */
-
   const handleSave =
     async () => {
-      if (!name.trim()) {
+      if (
+        !name.trim()
+      ) {
         alert(
-          'Please enter the person or business name.'
-        )
-
-        return
-      }
-
-      if (!roleId) {
-        alert(
-          'Please choose what this contact helps with.'
+          t(
+            'Please enter the person or business name.'
+          )
         )
 
         return
       }
 
       /*
-       * Public contacts need a
-       * telephone number because
-       * another farmer needs a way
-       * to contact them.
+       * Contact names stay Latin /
+       * English for consistent public
+       * directory search.
        */
+      if (
+        !isLatinContactName(
+          name
+        )
+      ) {
+        alert(
+          t(
+            'Please enter the contact name using English letters only.'
+          )
+        )
+
+        return
+      }
+
+      if (
+        !roleId
+      ) {
+        alert(
+          t(
+            'Please choose what this contact helps with.'
+          )
+        )
+
+        return
+      }
+
       if (
         makePublic &&
         !phone.trim()
       ) {
         alert(
-          'Please add a phone number before sharing this contact with nearby farmers.'
+          t(
+            'Please add a phone number before sharing this contact with nearby farmers.'
+          )
         )
 
         return
@@ -541,7 +562,9 @@ function Contacts({
           ?.confirmed
       ) {
         alert(
-          'Please set your farm location before sharing contacts with nearby farmers.'
+          t(
+            'Please set your farm location before sharing contacts with nearby farmers.'
+          )
         )
 
         return
@@ -551,16 +574,10 @@ function Contacts({
         new Date()
           .toISOString()
 
-      /*
-       * Preserve the original
-       * service-area snapshot.
-       *
-       * This belongs to the CONTACT,
-       * not to the user's current farm.
-       */
       const contact = {
         id:
-          editingContact?.id ||
+          editingContact
+            ?.id ||
           Date.now(),
 
         name:
@@ -600,29 +617,15 @@ function Contacts({
           true
         )
 
-        /*
-         * If sharing is enabled,
-         * create/update the separate
-         * public directory record.
-         */
-        if (makePublic) {
+        if (
+          makePublic
+        ) {
           const publicContact =
             await savePublicContact(
               contact,
               farmLocation
             )
 
-          /*
-           * Remember where this
-           * contact belongs inside
-           * the PRIVATE contact too.
-           *
-           * This means that even if
-           * sharing is disabled and
-           * enabled again later, the
-           * contact remains connected
-           * to its original area.
-           */
           contact.publicServiceArea =
             publicContact
               .serviceArea
@@ -632,23 +635,11 @@ function Contacts({
               .publicDirectorySharedAt ||
             now
         } else {
-          /*
-           * Remove the public copy,
-           * but KEEP publicServiceArea
-           * privately.
-           *
-           * This protects the original
-           * service location in case
-           * the contact is shared again.
-           */
           await removePublicContact(
             contact.id
           )
         }
 
-        /*
-         * Save private contact.
-         */
         if (
           editingContact
         ) {
@@ -665,13 +656,10 @@ function Contacts({
           (
             version
           ) =>
-            version + 1
+            version +
+            1
         )
 
-        /*
-         * Directory contents may
-         * have changed.
-         */
         setNearbyLoaded(
           false
         )
@@ -684,7 +672,9 @@ function Contacts({
         )
 
         alert(
-          'Unable to save the contact. Please check your internet connection and try again.'
+          t(
+            'Unable to save the contact. Please check your internet connection and try again.'
+          )
         )
       } finally {
         setSavingContact(
@@ -693,30 +683,28 @@ function Contacts({
       }
     }
 
-  /*
-   * --------------------------------
-   * DELETE
-   * --------------------------------
-   */
-
   const handleDelete =
     async (
       contact
     ) => {
       const confirmed =
         window.confirm(
-          `Delete ${contact.name} from Farm Contacts?`
+          t(
+            'Delete {name} from Farm Contacts?',
+            {
+              name:
+                contact.name,
+            }
+          )
         )
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
         return
       }
 
       try {
-        /*
-         * Always try to remove any
-         * public directory copy.
-         */
         await removePublicContact(
           contact.id
         )
@@ -733,7 +721,8 @@ function Contacts({
           (
             version
           ) =>
-            version + 1
+            version +
+            1
         )
       } catch (error) {
         console.error(
@@ -742,26 +731,22 @@ function Contacts({
         )
 
         alert(
-          'Unable to delete the contact. Please try again.'
+          t(
+            'Unable to delete the contact. Please try again.'
+          )
         )
       }
     }
 
-  /*
-   * --------------------------------
-   * ADD / EDIT SCREEN
-   * --------------------------------
-   */
-
   if (
-    screen === 'form'
+    screen ===
+    'form'
   ) {
     return (
       <div className="min-h-screen bg-[#F7F5EF]">
 
         <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-          {/* Header */}
           <header className="mb-8 flex items-center gap-3">
 
             <button
@@ -772,7 +757,9 @@ function Contacts({
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             >
               <ArrowLeft
-                size={20}
+                size={
+                  20
+                }
               />
             </button>
 
@@ -780,36 +767,44 @@ function Contacts({
 
               <h1 className="text-2xl font-bold text-gray-900">
                 {editingContact
-                  ? 'Edit Contact'
-                  : 'Add Farm Contact'}
+                  ? t(
+                      'Edit Contact'
+                    )
+                  : t(
+                      'Add Farm Contact'
+                    )}
               </h1>
 
-              <p className="text-sm text-gray-500">
-                Only the basics
-              </p>
+
 
             </div>
 
           </header>
 
-          {/* Name */}
           <section className="mb-5">
 
             <label
               htmlFor="contactName"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              Name
+              {t(
+                'Name (English)'
+              )}
             </label>
 
             <input
               id="contactName"
               type="text"
+              lang="en"
               value={
                 name
               }
               autoComplete="name"
-              placeholder="Example: Ramesh"
+              placeholder={
+                t(
+                  'Example: Ramesh'
+                )
+              }
               onChange={(
                 event
               ) =>
@@ -822,20 +817,29 @@ function Contacts({
               className="block w-full rounded-xl border border-gray-200 bg-white px-4 py-4 text-base outline-none"
             />
 
+            <p className="mt-2 px-1 text-xs text-gray-400">
+              {t(
+                'Enter the name using English letters.'
+              )}
+            </p>
+
           </section>
 
-          {/* Phone */}
           <section className="mb-5">
 
             <label
               htmlFor="contactPhone"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              Phone number
+              {t(
+                'Phone number'
+              )}
 
               <span className="ml-1 font-normal text-gray-400">
                 {' '}
-                (optional for private contacts)
+                {t(
+                  '(optional for private contacts)'
+                )}
               </span>
             </label>
 
@@ -847,7 +851,11 @@ function Contacts({
                 phone
               }
               autoComplete="tel"
-              placeholder="Example: 9876543210"
+              placeholder={
+                t(
+                  'Example: 9876543210'
+                )
+              }
               onChange={(
                 event
               ) =>
@@ -862,14 +870,15 @@ function Contacts({
 
           </section>
 
-          {/* Role */}
           <section className="mb-5">
 
             <label
               htmlFor="contactRole"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              What do they help with?
+              {t(
+                'What do they help with?'
+              )}
             </label>
 
             <div className="relative">
@@ -892,7 +901,9 @@ function Contacts({
               >
 
                 <option value="">
-                  Choose category
+                  {t(
+                    'Choose category'
+                  )}
                 </option>
 
                 {CONTACT_CATEGORIES.map(
@@ -910,9 +921,9 @@ function Contacts({
                       {
                         category.icon
                       }{' '}
-                      {
-                        category.label
-                      }
+                      {contactCategoryLabel(
+                        category.id
+                      )}
                     </option>
                   )
                 )}
@@ -920,7 +931,9 @@ function Contacts({
               </select>
 
               <ChevronDown
-                size={20}
+                size={
+                  20
+                }
                 className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
               />
 
@@ -928,30 +941,29 @@ function Contacts({
 
             {roleId && (
               <p className="mt-2 px-1 text-sm text-gray-500">
-
-                {
-                  getContactCategory(
-                    roleId
-                  ).description
-                }
-
+                {contactCategoryDescription(
+                  roleId
+                )}
               </p>
             )}
 
           </section>
 
-          {/* Notes */}
           <section className="mb-5">
 
             <label
               htmlFor="contactNotes"
               className="mb-2 block text-sm font-medium text-gray-600"
             >
-              Note
+              {t(
+                'Note'
+              )}
 
               <span className="ml-1 font-normal text-gray-400">
                 {' '}
-                (optional)
+                {t(
+                  '(optional)'
+                )}
               </span>
             </label>
 
@@ -961,7 +973,11 @@ function Contacts({
               value={
                 notes
               }
-              placeholder="Example: Available mornings"
+              placeholder={
+                t(
+                  'Example: Available mornings'
+                )
+              }
               onChange={(
                 event
               ) =>
@@ -975,12 +991,13 @@ function Contacts({
             />
 
             <p className="mt-2 px-1 text-xs leading-5 text-gray-400">
-              Notes stay private even if you share the contact.
+              {t(
+                'Notes stay private even if you share the contact.'
+              )}
             </p>
 
           </section>
 
-          {/* Public directory */}
           <section className="mb-6 rounded-2xl bg-white p-4 shadow-sm">
 
             <label className="flex cursor-pointer items-start gap-3">
@@ -1005,11 +1022,15 @@ function Contacts({
               <div>
 
                 <p className="font-medium text-gray-900">
-                  Share with nearby farmers
+                  {t(
+                    'Share with nearby farmers'
+                  )}
                 </p>
 
                 <p className="mt-1 text-sm leading-5 text-gray-500">
-                  Their name and phone number will be visible to signed-in Krishi Book users near this contact's area.
+                  {t(
+                    "Their name and phone number will be visible to signed-in Krishi Book users near this contact's area."
+                  )}
                 </p>
 
               </div>
@@ -1022,12 +1043,16 @@ function Contacts({
                 <div className="flex items-start gap-2">
 
                   <MapPin
-                    size={17}
+                    size={
+                      17
+                    }
                     className="mt-0.5 shrink-0 text-gray-500"
                   />
 
                   <p className="text-sm leading-5 text-gray-600">
-                    Krishi Book automatically works out the nearby area for this type of contact. You do not need to choose a distance.
+                    {t(
+                      'Krishi Book automatically works out the nearby area for this type of contact. You do not need to choose a distance.'
+                    )}
                   </p>
 
                 </div>
@@ -1037,7 +1062,6 @@ function Contacts({
 
           </section>
 
-          {/* Save */}
           <button
             type="button"
             onClick={
@@ -1046,25 +1070,35 @@ function Contacts({
             disabled={
               savingContact
             }
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white active:scale-[0.98] disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white disabled:opacity-50"
           >
 
             {savingContact ? (
               <RefreshCw
-                size={20}
+                size={
+                  20
+                }
                 className="animate-spin"
               />
             ) : (
               <Save
-                size={20}
+                size={
+                  20
+                }
               />
             )}
 
             {savingContact
-              ? 'Saving...'
+              ? t(
+                  'Saving...'
+                )
               : editingContact
-                ? 'Save Changes'
-                : 'Save Contact'}
+                ? t(
+                    'Save Changes'
+                  )
+                : t(
+                    'Save Contact'
+                  )}
 
           </button>
 
@@ -1074,18 +1108,11 @@ function Contacts({
     )
   }
 
-  /*
-   * --------------------------------
-   * CONTACT BOOK
-   * --------------------------------
-   */
-
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
 
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-        {/* Header */}
         <header className="mb-6 flex items-center gap-3">
 
           <button
@@ -1096,25 +1123,30 @@ function Contacts({
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
           >
             <ArrowLeft
-              size={20}
+              size={
+                20
+              }
             />
           </button>
 
           <div className="flex-1">
 
             <h1 className="text-2xl font-bold text-gray-900">
-              Farm Contacts
+              {t(
+                'Farm Contacts'
+              )}
             </h1>
 
             <p className="text-sm text-gray-500">
-              People who can help with the farm
+              {t(
+                'People who can help with the farm'
+              )}
             </p>
 
           </div>
 
         </header>
 
-        {/* Tabs */}
         <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-white p-1.5 shadow-sm">
 
           <button
@@ -1129,13 +1161,15 @@ function Contacts({
                 : 'text-gray-500'
             }`}
           >
-
             <Users
-              size={18}
+              size={
+                18
+              }
             />
 
-            My Contacts
-
+            {t(
+              'My Contacts'
+            )}
           </button>
 
           <button
@@ -1150,38 +1184,40 @@ function Contacts({
                 : 'text-gray-500'
             }`}
           >
-
             <Globe2
-              size={18}
+              size={
+                18
+              }
             />
 
-            Nearby
-
+            {t(
+              'Nearby'
+            )}
           </button>
 
         </div>
 
         {directoryView ===
-          'mine' ? (
+        'mine' ? (
           <>
-            {/* Add */}
             <button
               type="button"
               onClick={
                 openAddContact
               }
-              className="mb-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white active:scale-[0.98]"
+              className="mb-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gray-900 px-5 py-4 text-base font-semibold text-white"
             >
-
               <Plus
-                size={20}
+                size={
+                  20
+                }
               />
 
-              Add Contact
-
+              {t(
+                'Add Contact'
+              )}
             </button>
 
-            {/* Search */}
             {contacts.length >
               0 && (
               <section className="mb-5">
@@ -1189,7 +1225,9 @@ function Contacts({
                 <div className="relative">
 
                   <Search
-                    size={19}
+                    size={
+                      19
+                    }
                     className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                   />
 
@@ -1198,7 +1236,11 @@ function Contacts({
                     value={
                       searchQuery
                     }
-                    placeholder="Search my contacts..."
+                    placeholder={
+                      t(
+                        'Search my contacts...'
+                      )
+                    }
                     onChange={(
                       event
                     ) =>
@@ -1214,7 +1256,11 @@ function Contacts({
                   {searchQuery && (
                     <button
                       type="button"
-                      aria-label="Clear search"
+                      aria-label={
+                        t(
+                          'Clear search'
+                        )
+                      }
                       onClick={() =>
                         setSearchQuery(
                           ''
@@ -1223,7 +1269,9 @@ function Contacts({
                       className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-gray-400"
                     >
                       <X
-                        size={18}
+                        size={
+                          18
+                        }
                       />
                     </button>
                   )}
@@ -1233,25 +1281,27 @@ function Contacts({
               </section>
             )}
 
-            {/* No contacts */}
             {contacts.length ===
             0 ? (
               <section className="rounded-2xl bg-white p-8 text-center shadow-sm">
 
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E4EFD9]">
+                <Users
+                  size={
+                    27
+                  }
+                  className="mx-auto"
+                />
 
-                  <Users
-                    size={27}
-                  />
-
-                </div>
-
-                <p className="mt-4 text-base font-semibold text-gray-900">
-                  No farm contacts yet
+                <p className="mt-4 font-semibold">
+                  {t(
+                    'No farm contacts yet'
+                  )}
                 </p>
 
-                <p className="mt-2 text-sm leading-5 text-gray-500">
-                  Add labourers, buyers, suppliers and other people who help with the farm.
+                <p className="mt-2 text-sm text-gray-500">
+                  {t(
+                    'Add labourers, buyers, suppliers and other people who help with the farm.'
+                  )}
                 </p>
 
               </section>
@@ -1259,11 +1309,9 @@ function Contacts({
                 .length ===
               0 ? (
               <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
-
-                <p className="text-sm font-medium text-gray-700">
-                  No matching contacts
-                </p>
-
+                {t(
+                  'No matching contacts'
+                )}
               </section>
             ) : (
               <section className="space-y-3">
@@ -1277,14 +1325,12 @@ function Contacts({
                         contact.roleId
                       )
 
-                    const isActuallyShared =
+                    const shared =
                       Boolean(
-                        contact
-                          .makePublic
+                        contact.makePublic
                       ) &&
                       Boolean(
-                        contact
-                          .publicDirectorySharedAt
+                        contact.publicDirectorySharedAt
                       )
 
                     return (
@@ -1305,16 +1351,16 @@ function Contacts({
 
                           <div className="min-w-0 flex-1">
 
-                            <p className="text-base font-semibold text-gray-900">
+                            <p className="font-semibold text-gray-900">
                               {
                                 contact.name
                               }
                             </p>
 
                             <p className="mt-1 text-sm text-gray-500">
-                              {
-                                category.label
-                              }
+                              {contactCategoryLabel(
+                                contact.roleId
+                              )}
                             </p>
 
                             {contact.phone && (
@@ -1326,16 +1372,19 @@ function Contacts({
                             )}
 
                             {contact.notes && (
-                              <p className="mt-2 text-sm leading-5 text-gray-600">
+                              <p className="mt-2 text-sm text-gray-600">
                                 {
                                   contact.notes
                                 }
                               </p>
                             )}
 
-                            {isActuallyShared && (
+                            {shared && (
                               <p className="mt-2 text-xs font-medium text-[#4D7650]">
-                                🌐 Shared with nearby farmers
+                                🌐{' '}
+                                {t(
+                                  'Shared with nearby farmers'
+                                )}
                               </p>
                             )}
 
@@ -1350,13 +1399,15 @@ function Contacts({
                               href={`tel:${contact.phone}`}
                               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#E4F1E7] px-3 py-3 text-sm font-semibold text-gray-800"
                             >
-
                               <Phone
-                                size={17}
+                                size={
+                                  17
+                                }
                               />
 
-                              Call
-
+                              {t(
+                                'Call'
+                              )}
                             </a>
                           )}
 
@@ -1367,14 +1418,13 @@ function Contacts({
                                 contact
                               )
                             }
-                            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 text-gray-600"
-                            aria-label={`Edit ${contact.name}`}
+                            className="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100"
                           >
-
                             <Pencil
-                              size={17}
+                              size={
+                                17
+                              }
                             />
-
                           </button>
 
                           <button
@@ -1385,13 +1435,12 @@ function Contacts({
                               )
                             }
                             className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600"
-                            aria-label={`Delete ${contact.name}`}
                           >
-
                             <Trash2
-                              size={17}
+                              size={
+                                17
+                              }
                             />
-
                           </button>
 
                         </div>
@@ -1406,28 +1455,35 @@ function Contacts({
           </>
         ) : (
           <>
-            {/* Nearby explanation */}
             <section className="mb-5 rounded-2xl bg-[#F3F7EF] p-4">
 
               <div className="flex items-start gap-3">
 
                 <MapPin
-                  size={20}
-                  className="mt-0.5 shrink-0 text-gray-600"
+                  size={
+                    20
+                  }
                 />
 
-                <div className="min-w-0">
+                <div>
 
-                  <p className="font-semibold text-gray-900">
-                    Contacts near your farm
+                  <p className="font-semibold">
+                    {t(
+                      'Contacts near your farm'
+                    )}
                   </p>
 
-                  <p className="mt-1 text-sm leading-5 text-gray-600">
-                    Showing people and services that are likely to work around{' '}
+                  <p className="mt-1 text-sm text-gray-600">
+                    {t(
+                      'Showing people and services that are likely to work around'
+                    )}{' '}
+
                     <span className="font-medium">
                       {farmLocation
                         ?.placeName ||
-                        'your farm'}
+                        t(
+                          'your farm'
+                        )}
                     </span>
                     .
                   </p>
@@ -1438,7 +1494,6 @@ function Contacts({
 
             </section>
 
-            {/* Search */}
             {!nearbyLoading &&
               nearbyContacts
                 .length >
@@ -1448,7 +1503,9 @@ function Contacts({
                 <div className="relative">
 
                   <Search
-                    size={19}
+                    size={
+                      19
+                    }
                     className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                   />
 
@@ -1457,7 +1514,11 @@ function Contacts({
                     value={
                       searchQuery
                     }
-                    placeholder="Search nearby contacts..."
+                    placeholder={
+                      t(
+                        'Search nearby contacts...'
+                      )
+                    }
                     onChange={(
                       event
                     ) =>
@@ -1467,58 +1528,41 @@ function Contacts({
                           .value
                       )
                     }
-                    className="block w-full rounded-xl border border-gray-200 bg-white py-4 pl-11 pr-11 text-base outline-none"
+                    className="block w-full rounded-xl border border-gray-200 bg-white py-4 pl-11 pr-11"
                   />
-
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      aria-label="Clear search"
-                      onClick={() =>
-                        setSearchQuery(
-                          ''
-                        )
-                      }
-                      className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-gray-400"
-                    >
-
-                      <X
-                        size={18}
-                      />
-
-                    </button>
-                  )}
 
                 </div>
 
               </section>
             )}
 
-            {/* Loading */}
             {nearbyLoading && (
               <section className="rounded-2xl bg-white p-8 text-center shadow-sm">
 
                 <RefreshCw
-                  size={26}
-                  className="mx-auto animate-spin text-gray-400"
+                  size={
+                    26
+                  }
+                  className="mx-auto animate-spin"
                 />
 
                 <p className="mt-4 text-sm text-gray-500">
-                  Finding contacts near your farm...
+                  {t(
+                    'Finding contacts near your farm...'
+                  )}
                 </p>
 
               </section>
             )}
 
-            {/* Error */}
             {!nearbyLoading &&
               nearbyError && (
               <section className="rounded-2xl bg-white p-6 text-center shadow-sm">
 
                 <p className="text-sm text-gray-600">
-                  {
+                  {t(
                     nearbyError
-                  }
+                  )}
                 </p>
 
                 <button
@@ -1526,15 +1570,16 @@ function Contacts({
                   onClick={
                     loadNearbyContacts
                   }
-                  className="mt-4 rounded-xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white"
+                  className="mt-4 rounded-xl bg-gray-900 px-5 py-3 text-white"
                 >
-                  Try Again
+                  {t(
+                    'Try Again'
+                  )}
                 </button>
 
               </section>
             )}
 
-            {/* Empty */}
             {!nearbyLoading &&
               !nearbyError &&
               nearbyLoaded &&
@@ -1543,26 +1588,28 @@ function Contacts({
                 0 && (
               <section className="rounded-2xl bg-white p-8 text-center shadow-sm">
 
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E4EFD9]">
+                <Globe2
+                  size={
+                    27
+                  }
+                  className="mx-auto"
+                />
 
-                  <Globe2
-                    size={27}
-                  />
-
-                </div>
-
-                <p className="mt-4 text-base font-semibold text-gray-900">
-                  No shared contacts nearby yet
+                <p className="mt-4 font-semibold">
+                  {t(
+                    'No shared contacts nearby yet'
+                  )}
                 </p>
 
-                <p className="mt-2 text-sm leading-5 text-gray-500">
-                  As farmers around your area share useful contacts, they will appear here.
+                <p className="mt-2 text-sm text-gray-500">
+                  {t(
+                    'As farmers around your area share useful contacts, they will appear here.'
+                  )}
                 </p>
 
               </section>
             )}
 
-            {/* Search empty */}
             {!nearbyLoading &&
               !nearbyError &&
               nearbyContacts
@@ -1572,15 +1619,12 @@ function Contacts({
                 .length ===
                 0 && (
               <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
-
-                <p className="text-sm font-medium text-gray-700">
-                  No matching nearby contacts
-                </p>
-
+                {t(
+                  'No matching nearby contacts'
+                )}
               </section>
             )}
 
-            {/* Nearby list */}
             {!nearbyLoading &&
               !nearbyError &&
               visibleNearbyContacts
@@ -1615,16 +1659,16 @@ function Contacts({
 
                           <div className="min-w-0 flex-1">
 
-                            <p className="text-base font-semibold text-gray-900">
+                            <p className="font-semibold">
                               {
                                 contact.name
                               }
                             </p>
 
                             <p className="mt-1 text-sm text-gray-500">
-                              {
-                                category.label
-                              }
+                              {contactCategoryLabel(
+                                contact.roleId
+                              )}
                             </p>
 
                             {contact
@@ -1633,11 +1677,15 @@ function Contacts({
                               <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
 
                                 <MapPin
-                                  size={14}
+                                  size={
+                                    14
+                                  }
                                 />
 
                                 <span>
-                                  Around{' '}
+                                  {t(
+                                    'Around'
+                                  )}{' '}
                                   {
                                     contact
                                       .serviceArea
@@ -1650,7 +1698,9 @@ function Contacts({
 
                             {contact.isMine && (
                               <p className="mt-2 text-xs font-medium text-[#4D7650]">
-                                Shared by you
+                                {t(
+                                  'Shared by you'
+                                )}
                               </p>
                             )}
 
@@ -1661,18 +1711,21 @@ function Contacts({
                         {contact.phone && (
                           <a
                             href={`tel:${contact.phone}`}
-                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#E4F1E7] px-3 py-3 text-sm font-semibold text-gray-800"
+                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#E4F1E7] px-3 py-3 text-sm font-semibold"
                           >
-
                             <Phone
-                              size={17}
+                              size={
+                                17
+                              }
                             />
 
-                            Call{' '}
-                            {
-                              contact.name
-                            }
-
+                            {t(
+                              'Call {name}',
+                              {
+                                name:
+                                  contact.name,
+                              }
+                            )}
                           </a>
                         )}
 
@@ -1684,7 +1737,6 @@ function Contacts({
               </section>
             )}
 
-            {/* Refresh */}
             {nearbyLoaded &&
               !nearbyLoading && (
               <button
@@ -1694,20 +1746,24 @@ function Contacts({
                 }
                 className="mt-5 flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-gray-500"
               >
-
                 <RefreshCw
-                  size={16}
+                  size={
+                    16
+                  }
                 />
 
-                Refresh Nearby Contacts
-
+                {t(
+                  'Refresh Nearby Contacts'
+                )}
               </button>
             )}
           </>
         )}
 
         <p className="mt-8 pb-4 text-center text-xs text-gray-400">
-          Krishi Book · Farm Contacts
+          {t(
+            'Krishi Book · Farm Contacts'
+          )}
         </p>
 
       </main>
