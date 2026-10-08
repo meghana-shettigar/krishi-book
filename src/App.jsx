@@ -57,7 +57,7 @@ import {
   ArrowRight,
   Sprout,
   CloudUpload,
-  Users,
+  Phone,
   User,
 } from 'lucide-react'
 
@@ -756,26 +756,53 @@ function App() {
 
             </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                setScreen(
-                  'profile'
-                )
-              }
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm"
-              aria-label={
-                t(
-                  'Profile'
-                )
-              }
-            >
-              <User
-                size={
-                  22
-                }
-              />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+
+  {/* Farm Contacts */}
+  <button
+    type="button"
+    onClick={() =>
+      setScreen(
+        'contacts'
+      )
+    }
+    className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm transition active:scale-[0.96]"
+    aria-label={
+      t(
+        'Farm Contacts'
+      )
+    }
+  >
+    <Phone
+      size={
+        21
+      }
+    />
+  </button>
+
+  {/* Profile */}
+  <button
+    type="button"
+    onClick={() =>
+      setScreen(
+        'profile'
+      )
+    }
+    className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm transition active:scale-[0.96]"
+    aria-label={
+      t(
+        'Profile'
+      )
+    }
+  >
+    <User
+      size={
+        22
+      }
+    />
+  </button>
+
+</div>
 
           </div>
 
@@ -1169,42 +1196,6 @@ function App() {
               <p className="mt-1 text-sm text-gray-500">
                 {t(
                   'Add money made from the farm'
-                )}
-              </p>
-
-            </div>
-
-          </button>
-
-          <button
-            type="button"
-            onClick={() =>
-              setScreen(
-                'contacts'
-              )
-            }
-            className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
-          >
-
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#E8F0F7]">
-              <Users
-                size={
-                  25
-                }
-              />
-            </div>
-
-            <div>
-
-              <p className="text-base font-semibold text-gray-900">
-                {t(
-                  'Farm Contacts'
-                )}
-              </p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                {t(
-                  'Labour, buyers and farm services'
                 )}
               </p>
 
