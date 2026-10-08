@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ChevronDown,
+  ChevronRight,
   List as ListIcon,
   TrendingDown,
   TrendingUp,
@@ -29,8 +30,73 @@ import {
 } from '../utils/transactionSearch'
 
 import {
+  EXPENSE_CATEGORIES,
   mapExpenseToV3,
 } from '../data/expenseCategories'
+
+import {
+  useLanguage,
+} from '../i18n/LanguageContext'
+
+
+/*
+ * Keep Income categories in a
+ * predictable order.
+ *
+ * Stable ordering is easier to learn
+ * than sorting by total, because the
+ * category does not move every time
+ * new data is added.
+ */
+const INCOME_CATEGORY_ORDER = [
+  'Coconut',
+  'Supari',
+  'Pepper',
+  'Vegetable',
+  'Agricultural benefit',
+  'Other',
+]
+
+
+/*
+ * Returns the final category used
+ * for grouping a transaction.
+ *
+ * Expense:
+ * uses Category V3.
+ *
+ * Income:
+ * uses crop, which already gives us
+ * useful groups such as Coconut,
+ * Supari, Pepper, etc.
+ */
+function getTransactionCategory(
+  transaction
+) {
+  if (
+    transaction.type ===
+    'expense'
+  ) {
+    const mapped =
+      mapExpenseToV3(
+        transaction.category,
+        transaction.expenseType
+      )
+
+    return (
+      mapped?.category ||
+      transaction.category ||
+      'Other Expense'
+    )
+  }
+
+  return (
+    transaction.crop ||
+    transaction.incomeType ||
+    'Other'
+  )
+}
+
 
 function Trends({
   period,
@@ -41,6 +107,21 @@ function Trends({
   setCustomTo,
   onBack,
 }) {
+  const {
+    language,
+    t,
+    valueLabel,
+    formatDate,
+  } =
+    useLanguage()
+
+  /*
+   * menu
+   *   → Trends landing page
+   *
+   * list
+   *   → Category-based List View
+   */
   const [
     trendScreen,
     setTrendScreen,
@@ -53,66 +134,220 @@ function Trends({
   ] =
     useState('expense')
 
+  /*
+   * null means:
+   *
+   * show category overview.
+   *
+   * A category name means:
+   *
+   * show records inside that category.
+   */
+  const [
+    selectedCategory,
+    setSelectedCategory,
+  ] =
+    useState(null)
+
   const [
     searchQuery,
     setSearchQuery,
   ] =
     useState('')
 
+
   const transactions =
     getTransactions()
 
+
   const periodLabels = {
-    day: 'Today',
-    month: 'This Month',
-    year: 'This Year',
-    custom: 'Custom',
+    day:
+      t('Today'),
+
+    month:
+      t(
+        'This Month'
+      ),
+
+    year:
+      t(
+        'This Year'
+      ),
+
+    custom:
+      t('Custom'),
   }
 
+
+  /*
+   * --------------------------------
+   * NAVIGATION HELPERS
+   * --------------------------------
+   */
+
+  const showCategories =
+    () => {
+      setSelectedCategory(
+        null
+      )
+
+      setSearchQuery('')
+
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    }
+
+
+  const openCategory =
+    (
+      category
+    ) => {
+      setSelectedCategory(
+        category
+      )
+
+      setSearchQuery('')
+
+      /*
+       * Important on mobile:
+       *
+       * If a farmer taps a category
+       * near the bottom of the page,
+       * bring them back to the top so
+       * they immediately see the
+       * breadcrumb and category title.
+       */
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      })
+    }
+
+
+  const handleTabChange =
+    (
+      nextTab
+    ) => {
+      setActiveTab(
+        nextTab
+      )
+
+      setSelectedCategory(
+        null
+      )
+
+      setSearchQuery('')
+    }
+
+
+  const handlePeriodChange =
+    (
+      value
+    ) => {
+      setPeriod(
+        value
+      )
+
+      /*
+       * Changing period can completely
+       * change which categories exist.
+       * Return to category overview.
+       */
+      setSelectedCategory(
+        null
+      )
+
+      setSearchQuery('')
+    }
+
+
   const handleCustomFromChange =
-    (value) => {
-      setCustomFrom(value)
+    (
+      value
+    ) => {
+      setCustomFrom(
+        value
+      )
 
       if (
         customTo &&
         value &&
-        customTo < value
+        customTo <
+          value
       ) {
         setCustomTo('')
       }
+
+      setSelectedCategory(
+        null
+      )
+
+      setSearchQuery('')
     }
 
+
   const handleCustomToChange =
-    (value) => {
+    (
+      value
+    ) => {
       if (
         customFrom &&
         value &&
-        value < customFrom
+        value <
+          customFrom
       ) {
         alert(
-          'To date cannot be earlier than From date.'
+          t(
+            'To date cannot be earlier than From date.'
+          )
         )
 
         return
       }
 
-      setCustomTo(value)
+      setCustomTo(
+        value
+      )
+
+      setSelectedCategory(
+        null
+      )
+
+      setSearchQuery('')
     }
+
 
   const handleResetCustomDates =
     () => {
       setCustomFrom('')
       setCustomTo('')
+
+      setSelectedCategory(
+        null
+      )
+
+      setSearchQuery('')
     }
 
+
   /*
-   * Filter first by selected period.
+   * --------------------------------
+   * PERIOD FILTER
+   * --------------------------------
    */
+
   const filteredTransactions =
-    period === 'custom'
+    period ===
+    'custom'
       ? transactions.filter(
-          (transaction) => {
-            if (!transaction.date) {
+          (
+            transaction
+          ) => {
+            if (
+              !transaction.date
+            ) {
               return false
             }
 
@@ -140,72 +375,240 @@ function Trends({
           period
         )
 
+
   /*
-   * Search across both expense
-   * and income records.
+   * Only records belonging to the
+   * selected Expense / Income tab.
    */
-  const searchedTransactions =
+  const tabTransactions =
     filteredTransactions.filter(
-      (transaction) =>
-        transactionMatchesSearch(
-          transaction,
-          searchQuery
-        )
+      (
+        transaction
+      ) =>
+        transaction.type ===
+        activeTab
     )
 
-  /*
-   * Apply Expense / Income tab.
-   */
-  const visibleTransactions =
-    searchedTransactions
-      .filter(
-        (transaction) =>
-          transaction.type ===
-          activeTab
-      )
-      .sort(
-        (a, b) =>
-          new Date(b.date) -
-          new Date(a.date)
-      )
 
-  const visibleTotal =
-    visibleTransactions.reduce(
-      (total, transaction) =>
+  const activeTabTotal =
+    tabTransactions.reduce(
+      (
+        total,
+        transaction
+      ) =>
         total +
         Number(
-          transaction.amount || 0
+          transaction.amount ||
+          0
         ),
       0
     )
 
-  const searchSuggestion =
-    getSearchSuggestion(
-      searchQuery,
-      transactions
-    )
-
-  const formatDate = (date) => {
-    if (!date) {
-      return ''
-    }
-
-    return new Date(
-      `${date}T00:00:00`
-    ).toLocaleDateString(
-      'en-IN',
-      {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }
-    )
-  }
 
   /*
-   * Trends landing page
+   * --------------------------------
+   * BUILD CATEGORY SUMMARY
+   * --------------------------------
+   *
+   * Example:
+   *
+   * Pesticide
+   * total: ₹4,800
+   * count: 3
    */
-  if (trendScreen === 'menu') {
+
+  const categoryMap =
+    new Map()
+
+
+  tabTransactions.forEach(
+    (
+      transaction
+    ) => {
+      const category =
+        getTransactionCategory(
+          transaction
+        )
+
+      const existing =
+        categoryMap.get(
+          category
+        ) || {
+          category,
+          total: 0,
+          count: 0,
+        }
+
+      existing.total +=
+        Number(
+          transaction.amount ||
+          0
+        )
+
+      existing.count +=
+        1
+
+      categoryMap.set(
+        category,
+        existing
+      )
+    }
+  )
+
+
+  /*
+   * Keep categories in the same
+   * familiar order used elsewhere
+   * in Krishi Book.
+   */
+  const categoryOrder =
+    activeTab ===
+    'expense'
+      ? EXPENSE_CATEGORIES.map(
+          (
+            item
+          ) =>
+            item.value
+        )
+      : INCOME_CATEGORY_ORDER
+
+
+  const categoryGroups = [
+    ...categoryMap.values(),
+  ].sort(
+    (
+      first,
+      second
+    ) => {
+      const firstIndex =
+        categoryOrder.indexOf(
+          first.category
+        )
+
+      const secondIndex =
+        categoryOrder.indexOf(
+          second.category
+        )
+
+      /*
+       * Unknown/new categories are
+       * placed after the known ones.
+       */
+      if (
+        firstIndex === -1 &&
+        secondIndex === -1
+      ) {
+        return first.category
+          .localeCompare(
+            second.category
+          )
+      }
+
+      if (
+        firstIndex === -1
+      ) {
+        return 1
+      }
+
+      if (
+        secondIndex === -1
+      ) {
+        return -1
+      }
+
+      return (
+        firstIndex -
+        secondIndex
+      )
+    }
+  )
+
+
+  /*
+   * --------------------------------
+   * SELECTED CATEGORY RECORDS
+   * --------------------------------
+   */
+
+  const selectedCategoryTransactions =
+    selectedCategory
+      ? tabTransactions
+          .filter(
+            (
+              transaction
+            ) =>
+              getTransactionCategory(
+                transaction
+              ) ===
+              selectedCategory
+          )
+          .sort(
+            (
+              first,
+              second
+            ) =>
+              new Date(
+                second.date
+              ) -
+              new Date(
+                first.date
+              )
+          )
+      : []
+
+
+  const selectedCategoryTotal =
+    selectedCategoryTransactions
+      .reduce(
+        (
+          total,
+          transaction
+        ) =>
+          total +
+          Number(
+            transaction.amount ||
+            0
+          ),
+        0
+      )
+
+
+  /*
+   * Search is deliberately only used
+   * after opening a category.
+   */
+  const visibleTransactions =
+    selectedCategoryTransactions
+      .filter(
+        (
+          transaction
+        ) =>
+          transactionMatchesSearch(
+            transaction,
+            searchQuery
+          )
+      )
+
+
+  const searchSuggestion =
+    selectedCategory
+      ? getSearchSuggestion(
+          searchQuery,
+          selectedCategoryTransactions
+        )
+      : null
+
+
+  /*
+   * --------------------------------
+   * TRENDS LANDING PAGE
+   * --------------------------------
+   */
+
+  if (
+    trendScreen ===
+    'menu'
+  ) {
     return (
       <div className="min-h-screen bg-[#F7F5EF]">
 
@@ -215,7 +618,9 @@ function Trends({
 
             <button
               type="button"
-              onClick={onBack}
+              onClick={
+                onBack
+              }
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
             >
               <ArrowLeft
@@ -226,47 +631,66 @@ function Trends({
             <div>
 
               <h1 className="text-2xl font-bold text-gray-900">
-                Trends
+                {t(
+                  'Trends'
+                )}
               </h1>
 
               <p className="text-sm text-gray-500">
-                Understand how your farm is doing
+                {t(
+                  'Understand how your farm is doing'
+                )}
               </p>
 
             </div>
 
           </header>
 
+
           <section>
 
             <p className="mb-3 text-sm font-medium text-gray-600">
-              Choose a view
+              {t(
+                'Choose a view'
+              )}
             </p>
 
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
                 setTrendScreen(
                   'list'
                 )
-              }
+
+                setSelectedCategory(
+                  null
+                )
+
+                setSearchQuery('')
+              }}
               className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
             >
 
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E8E8F5]">
+
                 <ListIcon
                   size={25}
                 />
+
               </div>
 
               <div className="min-w-0 flex-1">
 
                 <p className="text-base font-semibold text-gray-900">
-                  List View
+                  {t(
+                    'List View'
+                  )}
                 </p>
 
                 <p className="mt-1 text-sm leading-5 text-gray-500">
-                  See detailed income and expense records
+                  {t(
+                    'See detailed income and expense records'
+                  )}
                 </p>
 
               </div>
@@ -280,12 +704,18 @@ function Trends({
 
           </section>
 
+
           <p className="mt-6 text-center text-xs text-gray-400">
-            More visualisations will be added here
+            {t(
+              'More visualisations will be added here'
+            )}
           </p>
 
+
           <p className="mt-8 pb-4 text-center text-xs text-gray-400">
-            Krishi Book · Farm Ledger
+            {t(
+              'Krishi Book · Farm Ledger'
+            )}
           </p>
 
         </main>
@@ -294,60 +724,97 @@ function Trends({
     )
   }
 
+
   /*
-   * List View
+   * --------------------------------
+   * LIST VIEW
+   * --------------------------------
    */
+
   return (
     <div className="min-h-screen bg-[#F7F5EF]">
 
       <main className="mx-auto min-h-screen w-full max-w-md px-5 py-6">
 
-        <header className="mb-8 flex items-center gap-3">
+
+        {/* Header */}
+        <header className="mb-6 flex items-center gap-3">
 
           <button
             type="button"
-            onClick={() =>
-              setTrendScreen(
-                'menu'
-              )
-            }
+            onClick={() => {
+              if (
+                selectedCategory
+              ) {
+                showCategories()
+              } else {
+                setTrendScreen(
+                  'menu'
+                )
+              }
+            }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm"
+            aria-label={
+              selectedCategory
+                ? t(
+                    'Back to categories'
+                  )
+                : t(
+                    'Trends'
+                  )
+            }
           >
             <ArrowLeft
               size={20}
             />
           </button>
 
-          <div>
+          <div className="min-w-0">
 
             <h1 className="text-2xl font-bold text-gray-900">
-              List View
+              {t(
+                'List View'
+              )}
             </h1>
 
-            <p className="text-sm text-gray-500">
-              Income and expense records
+            <p className="truncate text-sm text-gray-500">
+              {selectedCategory
+                ? valueLabel(
+                    selectedCategory
+                  )
+                : t(
+                    'Choose a category to see its records'
+                  )}
             </p>
 
           </div>
 
         </header>
 
+
+        {/* Period */}
         <section className="mb-4">
 
           <label
             htmlFor="trendPeriod"
             className="mb-2 block text-sm font-medium text-gray-600"
           >
-            View
+            {t(
+              'View'
+            )}
           </label>
 
           <div className="relative">
 
             <select
               id="trendPeriod"
-              value={period}
-              onChange={(event) =>
-                setPeriod(
+              value={
+                period
+              }
+              onChange={(
+                event
+              ) =>
+                handlePeriodChange(
                   event.target.value
                 )
               }
@@ -355,19 +822,27 @@ function Trends({
             >
 
               <option value="day">
-                Today
+                {t(
+                  'Today'
+                )}
               </option>
 
               <option value="month">
-                This Month
+                {t(
+                  'This Month'
+                )}
               </option>
 
               <option value="year">
-                This Year
+                {t(
+                  'This Year'
+                )}
               </option>
 
               <option value="custom">
-                Custom
+                {t(
+                  'Custom'
+                )}
               </option>
 
             </select>
@@ -383,19 +858,25 @@ function Trends({
             {getPeriodDateLabel(
               period,
               customFrom,
-              customTo
+              customTo,
+              language
             )}
           </p>
 
         </section>
 
-        {period === 'custom' && (
+
+        {/* Custom dates */}
+        {period ===
+          'custom' && (
           <section className="mb-5 w-full min-w-0 overflow-hidden rounded-2xl bg-white p-5 shadow-sm">
 
             <div className="mb-4 flex items-center justify-between gap-3">
 
               <p className="text-sm font-medium text-gray-600">
-                Select date range
+                {t(
+                  'Select date range'
+                )}
               </p>
 
               <button
@@ -405,7 +886,9 @@ function Trends({
                 }
                 className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-gray-500"
               >
-                Reset
+                {t(
+                  'Reset'
+                )}
               </button>
 
             </div>
@@ -418,18 +901,25 @@ function Trends({
                   htmlFor="trendCustomFrom"
                   className="mb-2 block text-sm font-medium text-gray-600"
                 >
-                  From
+                  {t(
+                    'From'
+                  )}
                 </label>
 
                 <input
                   id="trendCustomFrom"
+                  lang="en-IN"
                   type="date"
-                  value={customFrom}
+                  value={
+                    customFrom
+                  }
                   max={
                     customTo ||
                     undefined
                   }
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     handleCustomFromChange(
                       event.target.value
                     )
@@ -439,24 +929,32 @@ function Trends({
 
               </div>
 
+
               <div className="min-w-0">
 
                 <label
                   htmlFor="trendCustomTo"
                   className="mb-2 block text-sm font-medium text-gray-600"
                 >
-                  To
+                  {t(
+                    'To'
+                  )}
                 </label>
 
                 <input
                   id="trendCustomTo"
+                  lang="en-IN"
                   type="date"
-                  value={customTo}
+                  value={
+                    customTo
+                  }
                   min={
                     customFrom ||
                     undefined
                   }
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     handleCustomToChange(
                       event.target.value
                     )
@@ -471,78 +969,359 @@ function Trends({
           </section>
         )}
 
-        <TransactionSearch
-          query={searchQuery}
-          onChange={setSearchQuery}
-          suggestion={searchSuggestion}
-        />
 
-        <section className="mb-5 rounded-2xl bg-white p-1.5 shadow-sm">
+        {/*
+         * --------------------------------
+         * CATEGORY OVERVIEW
+         * --------------------------------
+         */}
+        {!selectedCategory && (
+          <>
 
-          <div className="grid grid-cols-2 gap-1">
+            {/* Expense / Income */}
+            <section className="mb-5 rounded-2xl bg-white p-1.5 shadow-sm">
 
-            <button
-              type="button"
-              onClick={() =>
-                setActiveTab(
-                  'expense'
-                )
-              }
-              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                activeTab ===
-                'expense'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-500'
-              }`}
-            >
-              Expense
-            </button>
+              <div className="grid grid-cols-2 gap-1">
 
-            <button
-              type="button"
-              onClick={() =>
-                setActiveTab(
-                  'income'
-                )
-              }
-              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                activeTab ===
-                'income'
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-500'
-              }`}
-            >
-              Income
-            </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleTabChange(
+                      'expense'
+                    )
+                  }
+                  className={`rounded-xl px-4 py-3.5 text-base font-semibold transition ${
+                    activeTab ===
+                    'expense'
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  {t(
+                    'Expense'
+                  )}
+                </button>
 
-          </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleTabChange(
+                      'income'
+                    )
+                  }
+                  className={`rounded-xl px-4 py-3.5 text-base font-semibold transition ${
+                    activeTab ===
+                    'income'
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  {t(
+                    'Income'
+                  )}
+                </button>
 
-        </section>
+              </div>
 
-        <section className="mb-4">
+            </section>
 
-          <div className="flex items-end justify-between gap-3">
 
-            <div>
+            {/* Overall total */}
+            <section className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
 
-              <p className="text-lg font-semibold text-gray-900">
-                {activeTab ===
-                'expense'
-                  ? 'Expenses'
-                  : 'Income'}
-              </p>
+              <div className="flex items-center justify-between gap-4">
+
+                <div>
+
+                  <p className="text-sm font-medium text-gray-500">
+                    {activeTab ===
+                    'expense'
+                      ? t(
+                          'Expenses'
+                        )
+                      : t(
+                          'Income'
+                        )}
+                  </p>
+
+                  <p className="mt-1 text-sm text-gray-500">
+
+                    {
+                      tabTransactions.length
+                    }{' '}
+
+                    {t(
+                      tabTransactions.length ===
+                      1
+                        ? 'record'
+                        : 'records'
+                    )}
+
+                    {' · '}
+
+                    {
+                      periodLabels[
+                        period
+                      ]
+                    }
+
+                  </p>
+
+                </div>
+
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(
+                    activeTabTotal
+                  )}
+                </p>
+
+              </div>
+
+            </section>
+
+
+            {/* Categories title */}
+            <section className="mb-3">
+
+              <h2 className="text-lg font-bold text-gray-900">
+                {t(
+                  'Categories'
+                )}
+              </h2>
 
               <p className="mt-1 text-sm text-gray-500">
+                {t(
+                  'Choose a category to see its records'
+                )}
+              </p>
+
+            </section>
+
+
+            {/* Empty */}
+            {categoryGroups.length ===
+            0 ? (
+              <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
+
+                <p className="text-sm font-medium text-gray-700">
+                  {activeTab ===
+                  'expense'
+                    ? t(
+                        'No expenses found'
+                      )
+                    : t(
+                        'No income found'
+                      )}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-400">
+                  {t(
+                    'There are no records for this period.'
+                  )}
+                </p>
+
+              </section>
+            ) : (
+              <section className="space-y-3">
+
+                {categoryGroups.map(
+                  (
+                    group
+                  ) => (
+                    <button
+                      key={
+                        group.category
+                      }
+                      type="button"
+                      onClick={() =>
+                        openCategory(
+                          group.category
+                        )
+                      }
+                      className="flex w-full items-center gap-3 rounded-2xl bg-white p-5 text-left shadow-sm transition active:scale-[0.98]"
+                    >
+
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+                          activeTab ===
+                          'expense'
+                            ? 'bg-[#FCE8E4]'
+                            : 'bg-[#E4F1E7]'
+                        }`}
+                      >
+
+                        {activeTab ===
+                        'expense' ? (
+                          <TrendingDown
+                            size={23}
+                          />
+                        ) : (
+                          <TrendingUp
+                            size={23}
+                          />
+                        )}
+
+                      </div>
+
+
+                      <div className="min-w-0 flex-1">
+
+                        {/*
+                         * Category name +
+                         * category total.
+                         */}
+                        <div className="flex items-start justify-between gap-3">
+
+                          <p className="min-w-0 text-base font-semibold leading-5 text-gray-900">
+                            {valueLabel(
+                              group.category
+                            )}
+                          </p>
+
+                          <p className="shrink-0 text-base font-bold text-gray-900">
+                            {formatCurrency(
+                              group.total
+                            )}
+                          </p>
+
+                        </div>
+
+
+                        <p className="mt-2 text-sm text-gray-500">
+
+                          {
+                            group.count
+                          }{' '}
+
+                          {t(
+                            group.count ===
+                            1
+                              ? 'record'
+                              : 'records'
+                          )}
+
+                        </p>
+
+                      </div>
+
+
+                      <ChevronRight
+                        size={20}
+                        className="shrink-0 text-gray-400"
+                      />
+
+                    </button>
+                  )
+                )}
+
+              </section>
+            )}
+
+          </>
+        )}
+
+
+        {/*
+         * --------------------------------
+         * CATEGORY DETAIL
+         * --------------------------------
+         */}
+        {selectedCategory && (
+          <>
+
+            {/* Breadcrumb */}
+            <nav
+              className="mb-4 overflow-hidden rounded-xl bg-white px-4 py-3 shadow-sm"
+              aria-label="Breadcrumb"
+            >
+
+              <div className="flex min-w-0 items-center gap-1.5 text-sm">
+
+                <button
+                  type="button"
+                  onClick={
+                    showCategories
+                  }
+                  className="shrink-0 font-medium text-gray-500"
+                >
+                  {t(
+                    'List View'
+                  )}
+                </button>
+
+                <ChevronRight
+                  size={15}
+                  className="shrink-0 text-gray-300"
+                />
+
+                <button
+                  type="button"
+                  onClick={
+                    showCategories
+                  }
+                  className="shrink-0 font-medium text-gray-500"
+                >
+                  {activeTab ===
+                  'expense'
+                    ? t(
+                        'Expenses'
+                      )
+                    : t(
+                        'Income'
+                      )}
+                </button>
+
+                <ChevronRight
+                  size={15}
+                  className="shrink-0 text-gray-300"
+                />
+
+                <span className="min-w-0 truncate font-semibold text-gray-900">
+                  {valueLabel(
+                    selectedCategory
+                  )}
+                </span>
+
+              </div>
+
+            </nav>
+
+
+            {/* Category summary */}
+            <section className="mb-5 rounded-2xl bg-white p-5 shadow-sm">
+
+              <p className="text-sm font-medium text-gray-500">
+                {t(
+                  'Category total'
+                )}
+              </p>
+
+              <h2 className="mt-1 text-xl font-bold leading-6 text-gray-900">
+                {valueLabel(
+                  selectedCategory
+                )}
+              </h2>
+
+              <p className="mt-3 text-3xl font-bold text-gray-900">
+                {formatCurrency(
+                  selectedCategoryTotal
+                )}
+              </p>
+
+              <p className="mt-2 text-sm text-gray-500">
 
                 {
-                  visibleTransactions.length
+                  selectedCategoryTransactions
+                    .length
                 }{' '}
 
-                record
-                {visibleTransactions.length ===
-                1
-                  ? ''
-                  : 's'}
+                {t(
+                  selectedCategoryTransactions
+                    .length ===
+                  1
+                    ? 'record'
+                    : 'records'
+                )}
 
                 {' · '}
 
@@ -554,379 +1333,451 @@ function Trends({
 
               </p>
 
-            </div>
-
-            <p className="text-lg font-bold text-gray-900">
-              {formatCurrency(
-                visibleTotal
-              )}
-            </p>
-
-          </div>
-
-        </section>
-
-        {visibleTransactions.length ===
-        0 ? (
-          <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
-
-            <p className="text-sm font-medium text-gray-700">
-
-              {searchQuery
-                ? 'No matching records found'
-                : activeTab ===
-                    'expense'
-                  ? 'No expenses found'
-                  : 'No income found'}
-
-            </p>
-
-            <p className="mt-1 text-sm text-gray-400">
-
-              {searchQuery
-                ? 'Try another word or check the suggested spelling.'
-                : 'There are no records for this period.'}
-
-            </p>
-
-          </section>
-        ) : (
-          <section className="space-y-3">
-
-            {visibleTransactions.map(
-              (
-                transaction
-              ) => {
-                const isIncome =
-                  transaction.type ===
-                  'income'
-
-                /*
-                 * Convert old expense
-                 * records to the final
-                 * V3 category for display.
-                 */
-                const mappedExpense =
-                  !isIncome
-                    ? mapExpenseToV3(
-                        transaction.category,
-                        transaction.expenseType
-                      )
-                    : null
-
-                const expenseCategory =
-                  mappedExpense
-                    ?.category ||
-                  transaction.category
-
-                const isLabour =
-                  !isIncome &&
-                  expenseCategory ===
-                    'Labour'
-
-                const hasSaleDetails =
-                  isIncome &&
-                  transaction.quantity !=
-                    null &&
-                  transaction.rate !=
-                    null
-
-                const hasNewLabourDetails =
-                  isLabour &&
-                  (
-                    transaction.menCount !=
-                      null ||
-                    transaction.womenCount !=
-                      null
-                  )
-
-                const hasLegacyLabourDetails =
-                  isLabour &&
-                  !hasNewLabourDetails &&
-                  transaction.numberOfPeople !=
-                    null &&
-                  transaction.dailyCharge !=
-                    null
-
-                const menCount =
-                  Number(
-                    transaction.menCount ||
-                      0
-                  )
-
-                const menRate =
-                  Number(
-                    transaction.menDailyCharge ||
-                      0
-                  )
-
-                const womenCount =
-                  Number(
-                    transaction.womenCount ||
-                      0
-                  )
-
-                const womenRate =
-                  Number(
-                    transaction.womenDailyCharge ||
-                      0
-                  )
-
-                const menTotal =
-                  menCount *
-                  menRate
-
-                const womenTotal =
-                  womenCount *
-                  womenRate
-
-                return (
-                  <div
-                    key={
-                      transaction.id
-                    }
-                    className="rounded-2xl bg-white p-4 shadow-sm"
-                  >
-
-                    <div className="flex items-start gap-3">
-
-                      <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                          isIncome
-                            ? 'bg-[#E4F1E7]'
-                            : 'bg-[#FCE8E4]'
-                        }`}
-                      >
-
-                        {isIncome ? (
-                          <TrendingUp
-                            size={21}
-                          />
-                        ) : (
-                          <TrendingDown
-                            size={21}
-                          />
-                        )}
-
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-
-                        <p className="font-medium text-gray-900">
-
-                          {isIncome
-                            ? transaction.crop
-                            : expenseCategory}
-
-                        </p>
-
-                        <p className="mt-1 text-xs text-gray-500">
-
-                          {isIncome && (
-                            <>
-                              {
-                                transaction.incomeType
-                              }
-
-                              {' · '}
-                            </>
-                          )}
-
-                          {formatDate(
-                            transaction.date
-                          )}
-
-                        </p>
-
-                      </div>
-
-                      <p
-                        className={`shrink-0 font-semibold ${
-                          isIncome
-                            ? 'text-gray-900'
-                            : 'text-gray-700'
-                        }`}
-                      >
-
-                        {isIncome
-                          ? '+'
-                          : '-'}
-
-                        {formatCurrency(
-                          transaction.amount
-                        )}
-
-                      </p>
-
-                    </div>
-
-                    {hasSaleDetails && (
-                      <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
-
-                        <p className="text-xs font-medium text-gray-500">
-                          Sale details
-                        </p>
-
-                        <p className="mt-1 text-sm font-medium text-gray-700">
-
-                          {Number(
-                            transaction.quantity
-                          ).toLocaleString(
-                            'en-IN'
-                          )}{' '}
-
-                          {transaction.crop ===
-                          'Coconut'
-                            ? 'coconuts'
-                            : 'kg'}
-
-                          {' × '}
-
-                          {formatCurrency(
-                            transaction.rate
-                          )}
-
-                          {transaction.crop ===
-                          'Coconut'
-                            ? ' / coconut'
-                            : ' / kg'}
-
-                        </p>
-
-                      </div>
-                    )}
-
-                    {hasNewLabourDetails && (
-                      <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
-
-                        <p className="mb-2 text-xs font-medium text-gray-500">
-                          Labour details
-                        </p>
-
-                        {menCount >
-                          0 && (
-                          <div className="mb-2 flex items-center justify-between gap-3">
-
-                            <span className="text-sm text-gray-700">
-                              Men
-                            </span>
-
-                            <span className="text-right text-sm font-medium text-gray-900">
-
-                              {menCount}
-
-                              {' × '}
-
-                              {formatCurrency(
-                                menRate
-                              )}
-
-                              {' = '}
-
-                              {formatCurrency(
-                                menTotal
-                              )}
-
-                            </span>
-
-                          </div>
-                        )}
-
-                        {womenCount >
-                          0 && (
-                          <div className="flex items-center justify-between gap-3">
-
-                            <span className="text-sm text-gray-700">
-                              Women
-                            </span>
-
-                            <span className="text-right text-sm font-medium text-gray-900">
-
-                              {womenCount}
-
-                              {' × '}
-
-                              {formatCurrency(
-                                womenRate
-                              )}
-
-                              {' = '}
-
-                              {formatCurrency(
-                                womenTotal
-                              )}
-
-                            </span>
-
-                          </div>
-                        )}
-
-                      </div>
-                    )}
-
-                    {hasLegacyLabourDetails && (
-                      <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
-
-                        <p className="mb-1 text-xs font-medium text-gray-500">
-                          Labour details
-                        </p>
-
-                        <p className="text-sm font-medium text-gray-700">
-
-                          {
-                            transaction.numberOfPeople
-                          }{' '}
-
-                          people
-
-                          {' × '}
-
-                          {formatCurrency(
-                            transaction.dailyCharge
-                          )}
-
-                          {' = '}
-
-                          {formatCurrency(
-                            Number(
-                              transaction.numberOfPeople
-                            ) *
-                              Number(
-                                transaction.dailyCharge
-                              )
-                          )}
-
-                        </p>
-
-                      </div>
-                    )}
-
-                    {transaction.notes?.trim() && (
-                      <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
-
-                        <p className="mb-1 text-xs font-medium text-gray-500">
-                          Note
-                        </p>
-
-                        <p className="text-sm leading-5 text-gray-700">
-                          {
-                            transaction.notes
-                          }
-                        </p>
-
-                      </div>
-                    )}
-
-                  </div>
-                )
-              }
+            </section>
+
+
+            {/* Search within category */}
+            {selectedCategoryTransactions
+              .length >
+              0 && (
+              <TransactionSearch
+                query={
+                  searchQuery
+                }
+                onChange={
+                  setSearchQuery
+                }
+                suggestion={
+                  searchSuggestion
+                }
+              />
             )}
 
-          </section>
+
+            {/* No search matches */}
+            {visibleTransactions.length ===
+              0 ? (
+              <section className="rounded-2xl bg-white p-7 text-center shadow-sm">
+
+                <p className="text-sm font-medium text-gray-700">
+
+                  {searchQuery
+                    ? t(
+                        'No matching records found'
+                      )
+                    : activeTab ===
+                        'expense'
+                      ? t(
+                          'No expenses found'
+                        )
+                      : t(
+                          'No income found'
+                        )}
+
+                </p>
+
+                <p className="mt-1 text-sm text-gray-400">
+
+                  {searchQuery
+                    ? t(
+                        'Try another word or check the suggested spelling.'
+                      )
+                    : t(
+                        'There are no records for this period.'
+                      )}
+
+                </p>
+
+              </section>
+            ) : (
+              <section className="space-y-3">
+
+                {visibleTransactions.map(
+                  (
+                    transaction
+                  ) => {
+                    const isIncome =
+                      transaction.type ===
+                      'income'
+
+                    const isLabour =
+                      !isIncome &&
+                      selectedCategory ===
+                        'Labour'
+
+                    const hasSaleDetails =
+                      isIncome &&
+                      transaction.quantity !=
+                        null &&
+                      transaction.rate !=
+                        null
+
+                    const menCount =
+                      Number(
+                        transaction.menCount ||
+                        0
+                      )
+
+                    const menRate =
+                      Number(
+                        transaction.menDailyCharge ||
+                        0
+                      )
+
+                    const womenCount =
+                      Number(
+                        transaction.womenCount ||
+                        0
+                      )
+
+                    const womenRate =
+                      Number(
+                        transaction.womenDailyCharge ||
+                        0
+                      )
+
+                    const menTotal =
+                      menCount *
+                      menRate
+
+                    const womenTotal =
+                      womenCount *
+                      womenRate
+
+                    const hasNewLabourDetails =
+                      isLabour &&
+                      (
+                        transaction.menCount !=
+                          null ||
+                        transaction.womenCount !=
+                          null
+                      )
+
+                    const hasLegacyLabourDetails =
+                      isLabour &&
+                      !hasNewLabourDetails &&
+                      transaction.numberOfPeople !=
+                        null &&
+                      transaction.dailyCharge !=
+                        null
+
+
+                    return (
+                      <div
+                        key={
+                          transaction.id
+                        }
+                        className="rounded-2xl bg-white p-4 shadow-sm"
+                      >
+
+                        {/*
+                         * The category is already
+                         * clearly visible above.
+                         *
+                         * Lead each record with
+                         * DATE + AMOUNT instead.
+                         */}
+                        <div className="flex items-start gap-3">
+
+                          <div
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                              isIncome
+                                ? 'bg-[#E4F1E7]'
+                                : 'bg-[#FCE8E4]'
+                            }`}
+                          >
+
+                            {isIncome ? (
+                              <TrendingUp
+                                size={21}
+                              />
+                            ) : (
+                              <TrendingDown
+                                size={21}
+                              />
+                            )}
+
+                          </div>
+
+
+                          <div className="min-w-0 flex-1">
+
+                            <p className="font-semibold text-gray-900">
+                              {formatDate(
+                                transaction.date,
+                                {
+                                  day:
+                                    'numeric',
+
+                                  month:
+                                    'short',
+
+                                  year:
+                                    'numeric',
+                                }
+                              )}
+                            </p>
+
+
+                            <p className="mt-1 text-xs text-gray-500">
+
+                              {isIncome
+                                ? valueLabel(
+                                    transaction.incomeType
+                                  )
+                                : t(
+                                    'Expense'
+                                  )}
+
+                            </p>
+
+                          </div>
+
+
+                          <p className="shrink-0 text-base font-bold text-gray-900">
+
+                            {isIncome
+                              ? '+'
+                              : '-'}
+
+                            {formatCurrency(
+                              transaction.amount
+                            )}
+
+                          </p>
+
+                        </div>
+
+
+                        {/* Sale details */}
+                        {hasSaleDetails && (
+                          <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
+
+                            <p className="text-xs font-medium text-gray-500">
+                              {t(
+                                'Sale details'
+                              )}
+                            </p>
+
+                            <p className="mt-1 text-sm font-medium text-gray-700">
+
+                              {Number(
+                                transaction.quantity
+                              ).toLocaleString(
+                                'en-IN'
+                              )}{' '}
+
+                              {transaction.crop ===
+                              'Coconut'
+                                ? t(
+                                    'coconuts'
+                                  )
+                                : 'kg'}
+
+                              {' × '}
+
+                              {formatCurrency(
+                                transaction.rate
+                              )}
+
+                              {transaction.crop ===
+                              'Coconut'
+                                ? ` / ${t(
+                                    'coconut'
+                                  )}`
+                                : ' / kg'}
+
+                            </p>
+
+                          </div>
+                        )}
+
+
+                        {/* New Labour details */}
+                        {hasNewLabourDetails && (
+                          <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
+
+                            <p className="mb-2 text-xs font-medium text-gray-500">
+                              {t(
+                                'Labour details'
+                              )}
+                            </p>
+
+
+                            {menCount >
+                              0 && (
+                              <div className="mb-2 flex items-center justify-between gap-3">
+
+                                <span className="text-sm text-gray-700">
+                                  {t(
+                                    'Men'
+                                  )}
+                                </span>
+
+                                <span className="text-right text-sm font-medium text-gray-900">
+
+                                  {
+                                    menCount
+                                  }
+
+                                  {' × '}
+
+                                  {formatCurrency(
+                                    menRate
+                                  )}
+
+                                  {' = '}
+
+                                  {formatCurrency(
+                                    menTotal
+                                  )}
+
+                                </span>
+
+                              </div>
+                            )}
+
+
+                            {womenCount >
+                              0 && (
+                              <div className="flex items-center justify-between gap-3">
+
+                                <span className="text-sm text-gray-700">
+                                  {t(
+                                    'Women'
+                                  )}
+                                </span>
+
+                                <span className="text-right text-sm font-medium text-gray-900">
+
+                                  {
+                                    womenCount
+                                  }
+
+                                  {' × '}
+
+                                  {formatCurrency(
+                                    womenRate
+                                  )}
+
+                                  {' = '}
+
+                                  {formatCurrency(
+                                    womenTotal
+                                  )}
+
+                                </span>
+
+                              </div>
+                            )}
+
+                          </div>
+                        )}
+
+
+                        {/* Older Labour records */}
+                        {hasLegacyLabourDetails && (
+                          <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
+
+                            <p className="mb-1 text-xs font-medium text-gray-500">
+                              {t(
+                                'Labour details'
+                              )}
+                            </p>
+
+                            <p className="text-sm font-medium text-gray-700">
+
+                              {
+                                transaction.numberOfPeople
+                              }{' '}
+
+                              {t(
+                                'people'
+                              )}
+
+                              {' × '}
+
+                              {formatCurrency(
+                                transaction.dailyCharge
+                              )}
+
+                              {' = '}
+
+                              {formatCurrency(
+                                Number(
+                                  transaction.numberOfPeople
+                                ) *
+                                  Number(
+                                    transaction.dailyCharge
+                                  )
+                              )}
+
+                            </p>
+
+                          </div>
+                        )}
+
+
+                        {/* Notes */}
+                        {transaction.notes?.trim() && (
+                          <div className="mt-4 rounded-xl bg-[#F7F5EF] px-4 py-3">
+
+                            <p className="mb-1 text-xs font-medium text-gray-500">
+                              {t(
+                                'Note'
+                              )}
+                            </p>
+
+                            {/*
+                             * Notes are user-entered
+                             * data. Never translate
+                             * or alter them.
+                             */}
+                            <p className="text-sm leading-5 text-gray-700">
+                              {
+                                transaction.notes
+                              }
+                            </p>
+
+                          </div>
+                        )}
+
+                      </div>
+                    )
+                  }
+                )}
+
+              </section>
+            )}
+
+
+            {/* Large explicit back option */}
+            <button
+              type="button"
+              onClick={
+                showCategories
+              }
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-4 text-sm font-semibold text-gray-700 shadow-sm"
+            >
+
+              <ArrowLeft
+                size={17}
+              />
+
+              {t(
+                'Back to categories'
+              )}
+
+            </button>
+
+          </>
         )}
 
+
         <p className="mt-8 pb-4 text-center text-xs text-gray-400">
-          Krishi Book · Farm Ledger
+          {t(
+            'Krishi Book · Farm Ledger'
+          )}
         </p>
 
       </main>

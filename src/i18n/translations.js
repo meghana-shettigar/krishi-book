@@ -339,11 +339,23 @@ const KANNADA_UI = {
     'ಮುಂದೆ ಇನ್ನಷ್ಟು ನೋಟಗಳನ್ನು ಇಲ್ಲಿ ಸೇರಿಸಲಾಗುತ್ತದೆ',
 
   'Income and expense records':
-    'ಆದಾಯ ಮತ್ತು ಖರ್ಚಿನ ದಾಖಲೆಗಳು',
+  'ಆದಾಯ ಮತ್ತು ಖರ್ಚಿನ ದಾಖಲೆಗಳು',
 
-  record:
-    'ದಾಖಲೆ',
+Categories:
+  'ವರ್ಗಗಳು',
 
+'Choose a category to see its records':
+  'ದಾಖಲೆಗಳನ್ನು ನೋಡಲು ಒಂದು ವರ್ಗವನ್ನು ಆಯ್ಕೆಮಾಡಿ',
+
+'Category total':
+  'ವರ್ಗದ ಒಟ್ಟು',
+
+'Back to categories':
+  'ವರ್ಗಗಳಿಗೆ ಹಿಂದಿರುಗಿ',
+
+record:
+  'ದಾಖಲೆ',
+  
   records:
     'ದಾಖಲೆಗಳು',
 
